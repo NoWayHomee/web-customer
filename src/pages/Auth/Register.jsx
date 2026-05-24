@@ -1,32 +1,81 @@
+// === Register.jsx - Trang Đăng ký tài khoản mới ===
+// Cho phép người dùng tạo tài khoản với: Họ tên, Email/Phone, Mật khẩu
+// Bố cục 2 cột: form trái, ảnh phải (giống Login)
+
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 
 const Register = () => {
+  // State lưu thông tin người dùng
   const [name, setName] = useState('');
+  const [identifier, setIdentifier] = useState('');
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [errors, setErrors] = useState({});
+  // Lấy hàm login (sau đăng ký → tự động đăng nhập)
   const { login } = useAuth();
   const navigate = useNavigate();
 
+  // Hàm validate
+  const validate = () => {
+    const newErrors = {};
+    if (!name.trim()) newErrors.name = 'Vui lòng nhập họ và tên';
+    
+    if (!identifier.trim()) {
+      newErrors.identifier = 'Vui lòng nhập Email hoặc Số điện thoại';
+    } else {
+      if (identifier.includes('@')) {
+        if (!/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(identifier.trim())) {
+          newErrors.identifier = 'Email không hợp lệ (yêu cầu @gmail.com)';
+        }
+      } else if (/^(0|\+84|84)/.test(identifier.trim())) {
+        if (!/^(0|\+84|84)(3|5|7|8|9)[0-9]{8}$/.test(identifier.trim().replace(/\s/g, ''))) {
+          newErrors.identifier = 'Số điện thoại không hợp lệ (phải đủ 10 số)';
+        }
+      }
+    }
+
+    if (!password.trim()) {
+      newErrors.password = 'Vui lòng nhập mật khẩu';
+    } else if (password.length < 6) {
+      newErrors.password = 'Mật khẩu phải có ít nhất 6 ký tự';
+    }
+
+    if (!confirmPassword.trim()) {
+      newErrors.confirmPassword = 'Vui lòng xác nhận mật khẩu';
+    } else if (password !== confirmPassword) {
+      newErrors.confirmPassword = 'Mật khẩu xác nhận không khớp';
+    }
+
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Xử lý đăng ký: giả lập → tự động login và chuyển về trang chủ
   const handleRegister = (e) => {
     e.preventDefault();
-    login({ name: name || 'Người dùng mới' });
+    if (!validate()) return;
+    
+    login({ name: name.trim() || 'Người dùng mới' });
     navigate('/');
   };
 
   return (
     <div className="min-h-screen flex flex-col bg-white font-sans text-gray-900">
       <div className="flex-grow flex max-w-[1440px] mx-auto w-full pt-10 px-4 md:px-10">
-        {/* Left Side: Form */}
+        {/* ===== CỘT TRÁI: Form đăng ký ===== */}
         <div className="w-full lg:w-1/2 flex flex-col justify-center px-4 md:px-16 lg:px-24 pb-10">
           <div className="w-full max-w-md mx-auto">
-            {/* Title */}
+            {/* --- Logo và slogan --- */}
             <div className="text-center mb-12">
               <h1 className="text-5xl font-serif font-bold text-black mb-3">NoWayHome</h1>
               <p className="text-gray-700 text-lg font-serif">Đặt phòng nhanh, trải nghiệm chất</p>
             </div>
 
-            {/* Form */}
+            {/* --- Form đăng ký --- */}
             <form onSubmit={handleRegister}>
+              {/* Ô nhập: Họ và tên */}
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                   Họ và tên
@@ -34,42 +83,67 @@ const Register = () => {
                 <input
                   type="text"
                   value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                  className="w-full border-b border-gray-400 py-2 text-gray-900 focus:outline-none focus:border-black transition-colors"
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name) setErrors({ ...errors, name: '' });
+                  }}
+                  className={`w-full border-b py-2 text-gray-900 focus:outline-none transition-colors ${errors.name ? 'border-red-500' : 'border-gray-400 focus:border-black'}`}
                 />
+                {errors.name && <p className="text-red-500 text-xs mt-1">{errors.name}</p>}
               </div>
 
+              {/* Ô nhập: UUID / Email / Phone */}
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                   UUID / Email / Phone
                 </label>
                 <input
                   type="text"
-                  className="w-full border-b border-gray-400 py-2 text-gray-900 focus:outline-none focus:border-black transition-colors"
+                  value={identifier}
+                  onChange={(e) => {
+                    setIdentifier(e.target.value);
+                    if (errors.identifier) setErrors({ ...errors, identifier: '' });
+                  }}
+                  className={`w-full border-b py-2 text-gray-900 focus:outline-none transition-colors ${errors.identifier ? 'border-red-500' : 'border-gray-400 focus:border-black'}`}
                 />
+                {errors.identifier && <p className="text-red-500 text-xs mt-1">{errors.identifier}</p>}
               </div>
 
+              {/* Ô nhập: Mật khẩu */}
               <div className="mb-6">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                   Password
                 </label>
                 <input
                   type="password"
-                  className="w-full border-b border-gray-400 py-2 text-gray-900 focus:outline-none focus:border-black transition-colors"
+                  value={password}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors({ ...errors, password: '' });
+                  }}
+                  className={`w-full border-b py-2 text-gray-900 focus:outline-none transition-colors ${errors.password ? 'border-red-500' : 'border-gray-400 focus:border-black'}`}
                 />
+                {errors.password && <p className="text-red-500 text-xs mt-1">{errors.password}</p>}
               </div>
 
+              {/* Ô nhập: Xác nhận mật khẩu */}
               <div className="mb-8">
                 <label className="block text-xs font-bold text-gray-500 uppercase tracking-widest mb-2">
                   Xác nhận mật khẩu
                 </label>
                 <input
                   type="password"
-                  className="w-full border-b border-gray-400 py-2 text-gray-900 focus:outline-none focus:border-black transition-colors"
+                  value={confirmPassword}
+                  onChange={(e) => {
+                    setConfirmPassword(e.target.value);
+                    if (errors.confirmPassword) setErrors({ ...errors, confirmPassword: '' });
+                  }}
+                  className={`w-full border-b py-2 text-gray-900 focus:outline-none transition-colors ${errors.confirmPassword ? 'border-red-500' : 'border-gray-400 focus:border-black'}`}
                 />
+                {errors.confirmPassword && <p className="text-red-500 text-xs mt-1">{errors.confirmPassword}</p>}
               </div>
 
+              {/* Nút đăng ký */}
               <button
                 type="submit"
                 className="w-full bg-[#403B69] hover:bg-[#2d2a4a] text-white py-3 font-semibold transition-colors mt-2"
@@ -78,7 +152,7 @@ const Register = () => {
               </button>
             </form>
 
-            {/* Social Login */}
+            {/* --- Đăng nhập mạng xã hội --- */}
             <div className="mt-8">
               <p className="text-center text-xs font-bold text-gray-500 uppercase tracking-widest mb-6">
                 Hoặc đăng nhập với
@@ -99,7 +173,7 @@ const Register = () => {
               </div>
             </div>
 
-            {/* Bottom Links */}
+            {/* --- Liên kết điều hướng --- */}
             <div className="mt-10 text-center text-sm space-y-2">
               <p>
                 Bạn là chủ khách sạn?{' '}
@@ -109,6 +183,7 @@ const Register = () => {
               </p>
               {/* Note: I added a link back to Login here so users can navigate back. 
                   Even though it's not strictly in the image, it's essential for navigation based on your previous request. */}
+              {/* Nút quay lại đăng nhập */}
               <p className="mt-4">
                 <Link to="/login" className="font-bold text-gray-500 hover:text-black hover:underline">
                   Quay lại Đăng nhập
@@ -118,7 +193,7 @@ const Register = () => {
           </div>
         </div>
 
-        {/* Right Side: Image */}
+        {/* ===== CỘT PHẢI: Ảnh minh họa ===== */}
         <div className="hidden lg:block lg:w-1/2 relative pb-10 pr-4 md:pr-0">
           <img
             src="https://images.unsplash.com/photo-1572331165267-854da2b10ccc?q=80&w=2000&auto=format&fit=crop"
@@ -128,7 +203,7 @@ const Register = () => {
         </div>
       </div>
 
-      {/* Footer */}
+      {/* ===== FOOTER ===== */}
       <footer className="bg-[#f3f4f6] py-6 px-4 md:px-12 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-medium space-y-4 md:space-y-0">
         <div className="font-bold text-[#403B69] text-sm">NoWayHome</div>
         <div className="flex space-x-6">

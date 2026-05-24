@@ -1,7 +1,11 @@
+// === Payment.jsx - Trang Thanh toán đặt phòng ===
+// Gồm: Form thông tin liên hệ, Chọn phương thức thanh toán, Bảng tổng giá, Modal thành công
+// Nhận dữ liệu từ trang RoomDetail qua React Router state
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { 
-  User, Bell, CreditCard, Wallet, Landmark, 
+import {
+  User, Bell, CreditCard, Wallet, Landmark,
   X, CheckCircle, Calendar, Users, ShieldCheck,
   ChevronRight
 } from 'lucide-react';
@@ -12,8 +16,16 @@ const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
-  
-  // Data passed from RoomDetail
+
+  useEffect(() => {
+    if (!user) {
+      alert('Vui lòng đăng nhập để tiếp tục thanh toán!');
+      navigate('/login', { state: { from: location.pathname + location.search } });
+    }
+  }, [user, navigate, location]);
+
+  // === Lấy dữ liệu khách sạn và thông tin đặt phòng từ trang RoomDetail ===
+  // Nếu không có dữ liệu (truy cập trực tiếp URL) → sử dụng dữ liệu mặc định
   const { hotel, bookingData } = location.state || {
     hotel: {
       name: "Halong Elegance",
@@ -31,38 +43,104 @@ const Payment = () => {
     }
   };
 
+  // === State form thông tin liên hệ người đặt phòng ===
   const [contactInfo, setContactInfo] = useState({
     fullName: user?.name || '',
     email: user?.email || '',
     phone: ''
   });
-
+  // State form thông tin thẻ tín dụng
+  const [cardInfo, setCardInfo] = useState({
+    cardNumber: '',
+    expiryDate: '',
+    cvv: '',
+    cardName: ''
+  });
+  // State lưu lỗi validation của form
+  const [errors, setErrors] = useState({});
+  // State chọn phương thức thanh toán (mặc định: thẻ tín dụng)
   const [paymentMethod, setPaymentMethod] = useState('credit_card');
+  // State hiển thị modal thông báo thanh toán thành công
   const [showSuccessModal, setShowSuccessModal] = useState(false);
 
-  const serviceFee = 1200000;
-  const taxRate = 0.1;
-  const subtotal = hotel.price * bookingData.nights * bookingData.rooms;
-  const tax = subtotal * taxRate;
-  const total = subtotal + serviceFee + tax;
+  // === Tính toán chi phí ===
+  const serviceFee = 1200000;  // Phí dịch vụ cố định
+  const taxRate = 0.1;         // Thuế 10%
+  const subtotal = hotel.price * bookingData.nights * bookingData.rooms;  // Tiền phòng = giá/đêm × số đêm × số phòng
+  const tax = subtotal * taxRate;            // Thuế
+  const total = subtotal + serviceFee + tax; // Tổng cộng
 
+  // Hàm định dạng giá tiền (ví dụ: 3200000 → "đ3,200,000")
   const formatPrice = (price) => {
     return "đ" + price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   };
 
+  // Hàm định dạng ngày hiển thị trên thẻ tổng giá
   const formatDate = (date) => {
     if (!date) return "";
     const d = new Date(date);
     return `${d.getDate()} - ${d.getDate() + 1} Thg ${d.getMonth() + 1}, ${d.getFullYear()}`;
   };
 
+  // Xử lý xác nhận thanh toán: Kiểm tra validation rồi hiển thị modal thành công
   const handleConfirmPayment = () => {
-    setShowSuccessModal(true);
+    const newErrors = {};
+
+    // 1. Kiểm tra không được để trống
+    Object.keys(contactInfo).forEach(key => {
+      if (!contactInfo[key] || !contactInfo[key].toString().trim()) {
+        newErrors[key] = 'Trường này không được để trống';
+      }
+    });
+
+    // 2. Kiểm tra email phải là gmail
+    if (contactInfo.email && !/^[a-zA-Z0-9._%+-]+@gmail\.com$/.test(contactInfo.email.trim())) {
+      newErrors.email = 'Email phải có định dạng @gmail.com';
+    }
+
+    // 3. Kiểm tra số điện thoại Việt Nam đủ số
+    const phoneRegex = /^(0|\+84|84)(3|5|7|8|9)[0-9]{8}$/;
+    if (contactInfo.phone && !phoneRegex.test(contactInfo.phone.trim().replace(/\s/g, ''))) {
+      newErrors.phone = 'Số điện thoại không hợp lệ (10 số)';
+    }
+
+    // 4. Kiểm tra thông tin thẻ tín dụng (nếu chọn)
+    if (paymentMethod === 'credit_card') {
+      if (!cardInfo.cardNumber.trim()) {
+        newErrors.cardNumber = 'Vui lòng nhập số thẻ';
+      } else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) {
+        newErrors.cardNumber = 'Số thẻ không hợp lệ (16 số)';
+      }
+      
+      if (!cardInfo.expiryDate.trim()) {
+        newErrors.expiryDate = 'Vui lòng nhập ngày hết hạn';
+      } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardInfo.expiryDate)) {
+        newErrors.expiryDate = 'Ngày hết hạn không hợp lệ (MM/YY)';
+      }
+      
+      if (!cardInfo.cvv.trim()) {
+        newErrors.cvv = 'Vui lòng nhập CVV';
+      } else if (!/^\d{3,4}$/.test(cardInfo.cvv)) {
+        newErrors.cvv = 'CVV không hợp lệ';
+      }
+      
+      if (!cardInfo.cardName.trim()) {
+        newErrors.cardName = 'Vui lòng nhập tên trên thẻ';
+      }
+    }
+
+    setErrors(newErrors);
+
+    if (Object.keys(newErrors).length === 0) {
+      setShowSuccessModal(true);
+    } else {
+      alert("Vui lòng kiểm tra lại thông tin thanh toán!");
+    }
   };
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 relative">
-      {/* Header */}
+      {/* ===== HEADER ===== */}
       <header className="bg-white py-4 px-8 md:px-16 flex justify-between items-center border-b border-gray-100 sticky top-0 z-40">
         <Link to="/" className="text-3xl font-bold text-[#403B69]">
           NoWayHome
@@ -84,10 +162,10 @@ const Payment = () => {
             </>
           ) : (
             <div className="flex items-center space-x-4">
-               <span className="font-bold text-gray-800 text-lg">Xin chào, Khách!</span>
-               <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                  <User className="w-6 h-6" />
-                </div>
+              <span className="font-bold text-gray-800 text-lg">Xin chào, Khách!</span>
+              <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+                <User className="w-6 h-6" />
+              </div>
             </div>
           )}
         </div>
@@ -96,53 +174,67 @@ const Payment = () => {
       <main className="max-w-[1200px] mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold text-[#403B69] mb-12">Thanh toán</h1>
 
+        {/* ===== BỐ CỤC 2 CỘT: Form (trái) | Thẻ tổng giá (phải) ===== */}
         <div className="flex flex-col lg:flex-row gap-16">
-          {/* Left Column */}
+          {/* === CỘT TRÁI: Form thông tin liên hệ + Phương thức thanh toán === */}
           <div className="flex-1">
-            {/* Contact Info */}
+            {/* --- Section: Thông tin liên hệ (Họ tên, Email, SĐT) --- */}
             <section className="mb-12">
               <h2 className="text-xl font-bold text-[#403B69] mb-6">Thông tin liên hệ</h2>
               <div className="space-y-6">
                 <div>
                   <label className="block text-sm font-bold text-gray-700 mb-2">Họ và tên</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Nhập họ và tên trên giấy tờ"
-                    className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none"
+                    className={`w-full bg-[#F3F4F6] rounded-lg px-4 py-3 focus:outline-none transition-colors border ${errors.fullName ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-transparent focus:ring-2 focus:ring-[#3F3D7C]'}`}
                     value={contactInfo.fullName}
-                    onChange={(e) => setContactInfo({...contactInfo, fullName: e.target.value})}
+                    onChange={(e) => {
+                      setContactInfo({ ...contactInfo, fullName: e.target.value });
+                      if (errors.fullName) setErrors({ ...errors, fullName: '' });
+                    }}
                   />
+                  {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Email</label>
-                    <input 
-                      type="email" 
-                      placeholder="example@email.com"
-                      className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none"
+                    <input
+                      type="email"
+                      placeholder="example@gmail.com"
+                      className={`w-full bg-[#F3F4F6] rounded-lg px-4 py-3 focus:outline-none transition-colors border ${errors.email ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-transparent focus:ring-2 focus:ring-[#3F3D7C]'}`}
                       value={contactInfo.email}
-                      onChange={(e) => setContactInfo({...contactInfo, email: e.target.value})}
+                      onChange={(e) => {
+                        setContactInfo({ ...contactInfo, email: e.target.value });
+                        if (errors.email) setErrors({ ...errors, email: '' });
+                      }}
                     />
+                    {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                   </div>
                   <div>
                     <label className="block text-sm font-bold text-gray-700 mb-2">Số điện thoại</label>
-                    <input 
-                      type="text" 
-                      placeholder="+84 000 000 000"
-                      className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none"
+                    <input
+                      type="text"
+                      placeholder="0912345678"
+                      className={`w-full bg-[#F3F4F6] rounded-lg px-4 py-3 focus:outline-none transition-colors border ${errors.phone ? 'border-red-500 focus:ring-2 focus:ring-red-500' : 'border-transparent focus:ring-2 focus:ring-[#3F3D7C]'}`}
                       value={contactInfo.phone}
-                      onChange={(e) => setContactInfo({...contactInfo, phone: e.target.value})}
+                      onChange={(e) => {
+                        setContactInfo({ ...contactInfo, phone: e.target.value });
+                        if (errors.phone) setErrors({ ...errors, phone: '' });
+                      }}
                     />
+                    {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                   </div>
                 </div>
               </div>
             </section>
 
-            {/* Payment Method */}
+            {/* --- Section: Phương thức thanh toán ---
+                4 lựa chọn: Thẻ tín dụng, MoMo, ZaloPay, Chuyển khoản */}
             <section>
               <h2 className="text-xl font-bold text-[#403B69] mb-6">Phương thức thanh toán</h2>
               <div className="space-y-3">
-                <PaymentOption 
+                <PaymentOption
                   id="credit_card"
                   label="Thẻ Tín Dụng / Ghi Nợ"
                   sublabel="Visa, Mastercard, Amex, JCB"
@@ -150,21 +242,21 @@ const Payment = () => {
                   selected={paymentMethod === 'credit_card'}
                   onClick={() => setPaymentMethod('credit_card')}
                 />
-                <PaymentOption 
+                <PaymentOption
                   id="momo"
                   label="Ví điện tử MoMo"
                   icon={<Wallet className="w-5 h-5" />}
                   selected={paymentMethod === 'momo'}
                   onClick={() => setPaymentMethod('momo')}
                 />
-                <PaymentOption 
+                <PaymentOption
                   id="zalopay"
                   label="Ví điện tử ZaloPay"
                   icon={<Wallet className="w-5 h-5" />}
                   selected={paymentMethod === 'zalopay'}
                   onClick={() => setPaymentMethod('zalopay')}
                 />
-                <PaymentOption 
+                <PaymentOption
                   id="bank_transfer"
                   label="Chuyển khoản ngân hàng"
                   icon={<Landmark className="w-5 h-5" />}
@@ -173,53 +265,79 @@ const Payment = () => {
                 />
               </div>
 
-              {/* Credit Card Form */}
+              {/* --- Form nhập thẻ tín dụng (chỉ hiện khi chọn credit_card) ---
+                  Gồm: Số thẻ, Ngày hết hạn, CVV, Tên trên thẻ */}
               {paymentMethod === 'credit_card' && (
                 <div className="mt-8 space-y-6 animate-fadeIn">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="md:col-span-2">
                       <label className="block text-sm font-bold text-gray-700 mb-2">Số thẻ</label>
                       <div className="relative">
-                        <input 
-                          type="text" 
+                        <input
+                          type="text"
                           placeholder="0000 0000 0000 0000"
-                          className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none pr-12"
+                          className={`w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 outline-none pr-12 ${errors.cardNumber ? 'ring-2 ring-red-500' : 'focus:ring-[#3F3D7C]'}`}
+                          value={cardInfo.cardNumber}
+                          onChange={(e) => {
+                            setCardInfo({ ...cardInfo, cardNumber: e.target.value });
+                            if (errors.cardNumber) setErrors({ ...errors, cardNumber: '' });
+                          }}
                         />
                         <div className="absolute right-4 top-1/2 -translate-y-1/2 flex space-x-1">
                           <div className="w-6 h-4 bg-gray-300 rounded-sm"></div>
                           <div className="w-6 h-4 bg-gray-400 rounded-sm"></div>
                         </div>
                       </div>
+                      {errors.cardNumber && <p className="text-red-500 text-xs mt-1">{errors.cardNumber}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">Ngày hết hạn</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="MM/YY"
-                        className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none"
+                        className={`w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 outline-none ${errors.expiryDate ? 'ring-2 ring-red-500' : 'focus:ring-[#3F3D7C]'}`}
+                        value={cardInfo.expiryDate}
+                        onChange={(e) => {
+                          setCardInfo({ ...cardInfo, expiryDate: e.target.value });
+                          if (errors.expiryDate) setErrors({ ...errors, expiryDate: '' });
+                        }}
                       />
+                      {errors.expiryDate && <p className="text-red-500 text-xs mt-1">{errors.expiryDate}</p>}
                     </div>
                     <div>
                       <label className="block text-sm font-bold text-gray-700 mb-2">CVV</label>
-                      <input 
-                        type="password" 
+                      <input
+                        type="password"
                         placeholder="123"
-                        className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none"
+                        className={`w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 outline-none ${errors.cvv ? 'ring-2 ring-red-500' : 'focus:ring-[#3F3D7C]'}`}
+                        value={cardInfo.cvv}
+                        onChange={(e) => {
+                          setCardInfo({ ...cardInfo, cvv: e.target.value });
+                          if (errors.cvv) setErrors({ ...errors, cvv: '' });
+                        }}
                       />
+                      {errors.cvv && <p className="text-red-500 text-xs mt-1">{errors.cvv}</p>}
                     </div>
                     <div className="md:col-span-2">
                       <label className="block text-sm font-bold text-gray-700 mb-2">Tên trên thẻ</label>
-                      <input 
-                        type="text" 
+                      <input
+                        type="text"
                         placeholder="NGUYEN VAN A"
-                        className="w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 focus:ring-[#3F3D7C] outline-none uppercase"
+                        className={`w-full bg-[#F3F4F6] border-none rounded-lg px-4 py-3 focus:ring-2 outline-none uppercase ${errors.cardName ? 'ring-2 ring-red-500' : 'focus:ring-[#3F3D7C]'}`}
+                        value={cardInfo.cardName}
+                        onChange={(e) => {
+                          setCardInfo({ ...cardInfo, cardName: e.target.value });
+                          if (errors.cardName) setErrors({ ...errors, cardName: '' });
+                        }}
                       />
+                      {errors.cardName && <p className="text-red-500 text-xs mt-1">{errors.cardName}</p>}
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* QR Code Simulation */}
+              {/* --- QR Code (hiện khi chọn MoMo/ZaloPay/Chuyển khoản) ---
+                  Hiển thị mã QR giả lập để quét thanh toán */}
               {(paymentMethod === 'momo' || paymentMethod === 'zalopay' || paymentMethod === 'bank_transfer') && (
                 <div className="mt-8 flex flex-col items-center animate-fadeIn">
                   <div className="bg-white p-4 rounded-2xl shadow-sm border border-gray-100">
@@ -238,20 +356,21 @@ const Payment = () => {
                   </p>
                 </div>
               )}
-              
+
               <p className="mt-6 text-[11px] text-gray-500">
                 Bằng việc tiếp tục, bạn đồng ý với <span className="underline cursor-pointer">Điều khoản dịch vụ</span> và <span className="underline cursor-pointer">Chính sách bảo mật</span> của chúng tôi.
               </p>
             </section>
           </div>
 
-          {/* Right Column (Price Summary Card) */}
+          {/* === CỘT PHẢI: Thẻ tổng giá (Price Summary Card) ===
+              Hiển thị: Ảnh khách sạn, Tên, Ngày, Số khách, Chi tiết giá, Tổng cộng, Nút xác nhận */}
           <div className="w-full lg:w-[400px]">
             <div className="bg-white rounded-3xl overflow-hidden shadow-[0_10px_40px_rgba(0,0,0,0.06)] border border-gray-100 sticky top-32">
               <div className="p-4">
-                <img 
-                  src={hotel.images[0]} 
-                  alt={hotel.name} 
+                <img
+                  src={hotel.images[0]}
+                  alt={hotel.name}
                   className="w-full h-48 object-cover rounded-2xl"
                 />
               </div>
@@ -302,13 +421,13 @@ const Payment = () => {
                   </p>
                 </div>
 
-                <button 
+                <button
                   onClick={handleConfirmPayment}
                   className="w-full bg-[#3F3D7C] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#34326b] transition-all transform active:scale-95"
                 >
                   Xác nhận thanh toán
                 </button>
-                
+
                 <div className="flex items-center justify-center mt-6 text-gray-400 space-x-2">
                   <ShieldCheck className="w-4 h-4" />
                   <span className="text-[11px] font-medium">Thanh toán an toàn & bảo mật</span>
@@ -319,12 +438,13 @@ const Payment = () => {
         </div>
       </main>
 
-      {/* Success Modal */}
+      {/* ===== MODAL THÀNH CÔNG: Hiển thị sau khi thanh toán =====
+          Gồm: Thông báo chúc mừng, Mã đặt phòng, Trạng thái, Nút quay về trang chủ */}
       {showSuccessModal && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-fadeIn">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)}></div>
           <div className="bg-white rounded-[2rem] w-full max-w-[600px] p-12 relative z-10 shadow-2xl animate-scaleIn">
-            <button 
+            <button
               onClick={() => setShowSuccessModal(false)}
               className="absolute top-8 right-8 text-gray-400 hover:text-gray-600 transition-colors"
             >
@@ -345,12 +465,19 @@ const Payment = () => {
                   Trạng thái: <span className="font-bold ml-2">Đã thanh toán</span>
                 </p>
               </div>
+              <button
+                onClick={() => navigate('/')}
+                className="w-full mt-4 bg-[#3F3D7C] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#34326b] transition-all transform active:scale-95 flex items-center justify-center gap-2"
+              >
+                Quay lại trang chủ
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      <style dangerouslySetInnerHTML={{ __html: `
+      <style dangerouslySetInnerHTML={{
+        __html: `
         @keyframes fadeIn {
           from { opacity: 0; }
           to { opacity: 1; }
@@ -370,9 +497,11 @@ const Payment = () => {
   );
 };
 
+// === Component PaymentOption: Mỗi lựa chọn phương thức thanh toán ===
+// Props: id, label, sublabel, icon, selected (đang chọn?), onClick
 const PaymentOption = ({ id, label, sublabel, icon, selected, onClick }) => {
   return (
-    <div 
+    <div
       onClick={onClick}
       className={`
         flex items-center justify-between p-4 rounded-xl border-2 cursor-pointer transition-all

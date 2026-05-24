@@ -1,66 +1,184 @@
+// === RoomDetail.jsx - Trang Chi tiết phòng khách sạn ===
+// Hiển thị: Gallery ảnh, Tiêu đề & đánh giá, Mô tả, Tiện nghi, Booking card (thẻ đặt phòng)
+// Nhận dữ liệu: hotel ID từ URL params, ngày/số khách từ query params
+
 import React, { useState, useEffect } from 'react';
-import { useParams, Link, useSearchParams, useNavigate } from 'react-router-dom';
+import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { 
   User, Bell, MapPin, Star, Check, Wifi, 
   Coffee, Waves, Dumbbell, Car, Utensils,
   ArrowLeft, Snowflake, Square
 } from 'lucide-react';
-import { hotelsMockData } from '../../mocks/hotels';
+import { hotelService } from '../../services/hotelService';
 
+// === Bảng ánh xạ tên tiện nghi → icon tương ứng ===
+// Dùng để hiển thị icon phù hợp bên cạnh tên tiện nghi (Hồ bơi, Wifi, Spa...)
 const amenityIcons = {
   "Hồ bơi": <Waves className="w-5 h-5 text-gray-600" />,
   "Bể bơi": <Waves className="w-5 h-5 text-gray-600" />,
   "Hồ bơi vô cực": <Waves className="w-5 h-5 text-gray-600" />,
+  "Swimming Pool": <Waves className="w-5 h-5 text-gray-600" />,
   "Spa": <Coffee className="w-5 h-5 text-gray-600" />,
   "Dịch vụ spa": <Coffee className="w-5 h-5 text-gray-600" />,
   "Nhà hàng": <Utensils className="w-5 h-5 text-gray-600" />,
   "Phòng ăn": <Utensils className="w-5 h-5 text-gray-600" />,
+  "Restaurant": <Utensils className="w-5 h-5 text-gray-600" />,
   "Wifi miễn phí": <Wifi className="w-5 h-5 text-gray-600" />,
+  "Free Wi-Fi": <Wifi className="w-5 h-5 text-gray-600" />,
   "Điều hòa": <Snowflake className="w-5 h-5 text-gray-600" />,
+  "Air Conditioning": <Snowflake className="w-5 h-5 text-gray-600" />,
   "Chỗ để xe riêng": <span className="font-bold border-2 border-gray-600 w-5 h-5 flex items-center justify-center text-[10px] rounded-sm text-gray-600">P</span>,
   "Đỗ xe": <span className="font-bold border-2 border-gray-600 w-5 h-5 flex items-center justify-center text-[10px] rounded-sm text-gray-600">P</span>,
+  "Free Parking": <span className="font-bold border-2 border-gray-600 w-5 h-5 flex items-center justify-center text-[10px] rounded-sm text-gray-600">P</span>,
 };
 
 const RoomDetail = () => {
+  // Lấy ID khách sạn từ URL (ví dụ: /hotel/hl1 → id = "hl1")
   const { id } = useParams();
   const { user } = useAuth();
+  // Lấy query params (được truyền từ trang SearchResults)
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const location = useLocation();
   
-  const hotel = hotelsMockData.find(h => h.id === id);
+  // State lưu trữ dữ liệu khách sạn từ backend
+  const [hotel, setHotel] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Sync state from URL
+  // === Lấy thông tin ngày nhận/trả phòng từ URL ===
   const startParam = searchParams.get('startDate');
   const endParam = searchParams.get('endDate');
   const startDate = startParam && !isNaN(Date.parse(startParam)) ? new Date(startParam) : null;
   const endDate = endParam && !isNaN(Date.parse(endParam)) ? new Date(endParam) : null;
   
+  // Lấy số lượng khách từ URL params
   const adults = parseInt(searchParams.get('adults')) || 2;
   const children = parseInt(searchParams.get('children')) || 0;
   const rooms = parseInt(searchParams.get('rooms')) || 1;
 
-  // Calculate nights
+  // === Fetch dữ liệu chi tiết từ Backend ===
+  useEffect(() => {
+    let active = true;
+    const fetchDetail = async () => {
+      setLoading(true);
+      setError(null);
+      try {
+        const queryParams = {};
+        if (startParam) {
+          queryParams.check_in = startParam.split('T')[0];
+        }
+        if (endParam) {
+          queryParams.check_out = endParam.split('T')[0];
+        }
+        
+        const response = await hotelService.getHotelDetail(id, queryParams);
+        if (active) {
+          const raw = response.data;
+          
+          // Ánh xạ đối tượng Property từ backend sang cấu trúc UI
+          const mapped = {
+            id: raw.slug,
+            name: raw.name,
+            slug: raw.slug,
+            description: raw.description || "Chưa có mô tả chi tiết.",
+            location: `${raw.address || ''}${raw.district ? `, ${raw.district}` : ''}, ${raw.city || ''}`,
+            rating: raw.starRating || 4,
+            reviews: raw.totalReviews || 12,
+            
+            // Map danh sách ảnh
+            images: raw.media?.length > 0 
+              ? raw.media.map(m => m.url) 
+              : ['https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80'],
+            image: raw.media?.find(m => m.isCover)?.url || raw.media?.[0]?.url || 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
+            
+            // Map danh sách tiện nghi
+            amenities: raw.amenities?.length > 0 
+              ? raw.amenities.map(a => a.amenity?.name) 
+              : ["Free Wi-Fi", "Swimming Pool", "Air Conditioning", "Restaurant"],
+              
+            // Tính toán giá từ các loại phòng (chọn giá thấp nhất)
+            price: raw.roomTypes?.length > 0 
+              ? Math.min(...raw.roomTypes.map(rt => Number(rt.total_price || rt.basePrice || 0)))
+              : 850000,
+            
+            roomsLeft: raw.roomTypes?.reduce((sum, rt) => sum + (rt.min_available_qty || rt.totalRooms || 0), 0) || 5
+          };
+          
+          setHotel(mapped);
+        }
+      } catch (err) {
+        console.error("Lỗi khi tải chi tiết khách sạn từ Backend:", err);
+        if (active) {
+          setError("Không thể tải chi tiết khách sạn từ server.");
+        }
+      } finally {
+        if (active) {
+          setLoading(false);
+        }
+      }
+    };
+
+    if (id) {
+      fetchDetail();
+    }
+    return () => {
+      active = false;
+    };
+  }, [id, startParam, endParam]);
+
+  // === Tính số đêm lưu trú ===
+  // Nếu có ngày hợp lệ → tính chênh lệch, nếu không → mặc định 1 đêm
   const nights = (startDate && endDate && endDate > startDate) 
     ? Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) 
     : 1;
 
+  // Hàm định dạng giá tiền (ví dụ: 2500000 → "2.500.000 ₫")
   const formatPrice = (price) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " ₫";
   };
 
+  // Hàm định dạng ngày (ví dụ: Date → "25/04/2026")
   const formatDate = (date) => {
     if (!date) return "Chưa chọn";
     return date.toLocaleDateString('vi-VN', { day: '2-digit', month: '2-digit', year: 'numeric' });
   };
 
-  if (!hotel) {
-    return <div className="min-h-screen flex items-center justify-center text-xl font-bold">Không tìm thấy khách sạn!</div>;
+  // Nếu đang loading hiển thị loading spinner
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-[#403B69]">
+        <div className="w-12 h-12 border-4 border-[#403B69] border-t-transparent rounded-full animate-spin mb-4"></div>
+        <p className="font-semibold">Đang tải thông tin chi tiết khách sạn từ Backend...</p>
+      </div>
+    );
   }
 
+  // Nếu có lỗi hoặc không tìm thấy khách sạn tương ứng → hiển thị thông báo lỗi
+  if (error || !hotel) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50 text-red-600 font-semibold p-6 text-center">
+        <p className="text-xl mb-4">{error || "Không tìm thấy thông tin khách sạn!"}</p>
+        <Link to="/search-results" className="text-[#403B69] hover:underline font-bold">
+          Quay lại danh sách tìm kiếm
+        </Link>
+      </div>
+    );
+  }
+
+  // Tính tổng giá = giá/đêm × số đêm × số phòng
   const totalPrice = hotel.price * nights * rooms;
 
+  // Hàm xử lý đặt phòng: Chuyển sang trang thanh toán và truyền dữ liệu qua React Router state
   const handleBooking = () => {
+    // Kiểm tra đăng nhập trước khi cho phép đặt phòng
+    if (!user) {
+      alert('Vui lòng đăng nhập để tiếp tục đặt phòng!');
+      navigate('/login', { state: { from: location.pathname + location.search } });
+      return;
+    }
+
     navigate('/payment', { 
       state: { 
         hotel, 
@@ -78,7 +196,7 @@ const RoomDetail = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
-      {/* Header */}
+      {/* ===== HEADER: Thanh điều hướng - cố định trên cùng ===== */}
       <header className="bg-white py-4 px-8 md:px-16 flex justify-between items-center border-b border-gray-100 sticky top-0 z-50">
         <Link to="/" className="text-3xl font-bold text-[#403B69]">
           NoWayHome
@@ -112,14 +230,14 @@ const RoomDetail = () => {
       </header>
 
       <main className="max-w-[1200px] mx-auto px-6 py-6">
-        {/* 1. Back link */}
+        {/* 1. Link quay lại trang kết quả tìm kiếm */}
         <div className="flex items-center text-sm text-gray-500 mb-6 font-medium">
           <Link to="/search-results" className="flex items-center hover:underline">
             <ArrowLeft className="w-4 h-4 mr-2" /> Back to Destinations
           </Link>
         </div>
 
-        {/* 2. Image Gallery */}
+        {/* 2. Gallery ảnh: Ảnh chính lớn bên trái (2/3), 2 ảnh nhỏ bên phải (1/3) */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-2 mb-8 h-[300px] md:h-[480px]">
           <div className="md:col-span-2 rounded-l-2xl overflow-hidden h-full">
             <img src={hotel.images[0]} alt={hotel.name} className="w-full h-full object-cover" />
@@ -134,7 +252,7 @@ const RoomDetail = () => {
           </div>
         </div>
 
-        {/* 3. Hotel Title & Info */}
+        {/* 3. Tiêu đề, đánh giá sao, địa điểm, số phòng còn trống */}
         <div className="mb-4">
           <h1 className="text-4xl font-bold text-[#403B69] mb-4">{hotel.name}</h1>
           <div className="flex items-center text-gray-600 text-sm space-x-4 mb-6">
@@ -159,10 +277,10 @@ const RoomDetail = () => {
         {/* 4. Separator */}
         <div className="w-full border-t border-gray-200 mb-8"></div>
 
-        {/* 5. Two-column Content Layout */}
+        {/* 5. Bố cục 2 cột: Mô tả & Tiện nghi (trái) | Thẻ đặt phòng (phải) */}
         <div className="flex flex-col lg:flex-row gap-12 relative">
           
-          {/* Left Column: Description & Amenities */}
+          {/* === CỘT TRÁI: Mô tả khách sạn + Danh sách tiện nghi với icon === */}
           <div className="flex-1">
             <div className="mb-12">
               <p className="text-gray-900 text-[16px] leading-7">
@@ -187,7 +305,9 @@ const RoomDetail = () => {
             </div>
           </div>
 
-          {/* Right Column: Booking Card (Sidebar) */}
+          {/* === CỘT PHẢI: Thẻ đặt phòng (Booking Card) ===
+              Hiển thị: Giá/đêm, Ngày check-in/out, Số khách, Nút đặt phòng
+              sticky: cố định khi cuộn trang */}
           <div className="w-full lg:w-[400px] flex-shrink-0">
             <div className="bg-white p-8 rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.08)] border border-gray-200 sticky top-28">
               <div className="mb-8">
@@ -230,7 +350,7 @@ const RoomDetail = () => {
         </div>
       </main>
 
-      {/* Footer */}
+      {/* ===== FOOTER ===== */}
       <footer className="bg-white border-t border-gray-100 py-10 mt-16">
         <div className="text-center text-xs text-gray-400 font-medium uppercase tracking-widest">
           © 2026 NOWAYHOME. ĐẶT PHÒNG NHANH, TRẢI NGHIỆM CHẤT.
