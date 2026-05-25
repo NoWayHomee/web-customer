@@ -8,14 +8,16 @@ import { Link, useSearchParams } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import {
   User, Bell, MapPin, Calendar, Search,
-  Star, Map, Filter, ChevronDown, Check
+  Star, Map, Filter, ChevronDown, Check, Heart
 } from 'lucide-react';
 import { hotelService } from '../../services/hotelService';
 
 const SearchResults = () => {
   const { user } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   // Lấy query parameters từ URL (được truyền từ trang Home khi tìm kiếm)
   const [searchParams, setSearchParams] = useSearchParams();
   // Lấy địa điểm từ URL params
@@ -768,6 +770,26 @@ const SearchResults = () => {
                   {/* Image */}
                   <div className="w-full md:w-[280px] h-60 md:h-auto relative flex-shrink-0">
                     <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
+                    
+                    {/* Heart Button */}
+                    <button
+                      onClick={(e) => {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        toggleWishlist(hotel);
+                      }}
+                      className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm w-9 h-9 rounded-full flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all shadow-md z-10"
+                      aria-label="Thêm vào yêu thích"
+                    >
+                      <Heart
+                        className={`w-5 h-5 transition-all duration-300 ${
+                          isInWishlist(hotel.id)
+                            ? 'text-red-500 fill-red-500 scale-110'
+                            : 'text-gray-600 hover:text-red-500'
+                        }`}
+                      />
+                    </button>
+
                     {hotel.tag && (
                       <div className="absolute top-4 left-0 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-r-lg shadow-sm">
                         {hotel.tag}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import {
   User, Bell,
   MapPin, Heart, Receipt, Settings, Star
@@ -11,36 +12,15 @@ import {
 const WishList = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { wishlist, removeFromWishlist } = useWishlist();
 
-  const favoriteItems = [
-    {
-      id: 1,
-      name: "Maldives Water Villa Resort",
-      location: "Maldives",
-      rating: "4.9",
-      reviews: "124",
-      price: "$850",
-      image: "https://images.unsplash.com/photo-1439066615861-d1af74d74000?q=80&w=800&auto=format&fit=crop"
-    },
-    {
-      id: 2,
-      name: "Le Meurice Luxury Suite",
-      location: "Paris, Pháp",
-      rating: "4.7",
-      reviews: "89",
-      price: "$420",
-      image: "https://images.unsplash.com/photo-1502602898657-3e91760cbb34?q=80&w=800&auto=format&fit=crop"
-    },
-    {
-      id: 3,
-      name: "Nordic Pine Cabin Retreat",
-      location: "Oslo, Na Uy",
-      rating: "4.9",
-      reviews: "210",
-      price: "$210",
-      image: "https://images.unsplash.com/photo-1449844908441-8829872d2607?q=80&w=800&auto=format&fit=crop"
+  // Hàm định dạng giá tiền (ví dụ: 1500000 -> "1.500.000 ₫")
+  const formatPrice = (price) => {
+    if (typeof price === 'number') {
+      return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " ₫";
     }
-  ];
+    return price;
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] font-sans text-gray-900 flex flex-col">
@@ -143,50 +123,73 @@ const WishList = () => {
 
             {/* Lưới danh sách thẻ */}
             <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {favoriteItems.map((item) => (
-                <div key={item.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
-                  {/* Image Container */}
-                  <div className="relative h-48 w-full">
-                    <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
-
-                    {/* Heart Button */}
-                    <button className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm w-8 h-8 rounded-full flex items-center justify-center hover:bg-white transition-colors shadow-sm">
-                      <Heart className="w-4 h-4 text-red-500 fill-red-500" />
-                    </button>
-
-                    {/* Rating Tag */}
-                    <div className="absolute bottom-3 left-3 bg-[#0064a3] px-2.5 py-1 rounded shadow-sm flex items-center gap-1">
-                      <Star className="w-3.5 h-3.5 text-white fill-white" />
-                      <span className="text-xs font-bold text-white">
-                        {item.rating} <span className="font-normal">({item.reviews} Đánh giá)</span>
-                      </span>
-                    </div>
+              {wishlist.length === 0 ? (
+                <div className="col-span-full py-16 text-center">
+                  <div className="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                    <Heart className="w-8 h-8 text-red-400 fill-red-100" />
                   </div>
-
-                  {/* Card Details */}
-                  <div className="p-4 flex flex-col flex-1">
-                    <h3 className="font-bold text-gray-900 text-base mb-1 leading-tight">{item.name}</h3>
-
-                    <div className="flex items-center text-gray-500 text-sm mb-4">
-                      <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
-                      {item.location}
-                    </div>
-
-                    <div className="flex-1" />
-
-                    {/* Footer Card */}
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <span className="text-xl font-bold text-gray-900">{item.price}</span>
-                        <span className="text-gray-500 text-xs ml-1">/ đêm</span>
-                      </div>
-                      <button className="bg-[#0064a3] hover:bg-[#00508a] text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors">
-                        Xem chi tiết
-                      </button>
-                    </div>
-                  </div>
+                  <h3 className="text-xl font-bold text-gray-800 mb-2">Danh sách yêu thích trống</h3>
+                  <p className="text-gray-500 mb-6 text-sm max-w-sm mx-auto">Hãy khám phá các chỗ nghỉ tuyệt vời và lưu lại những nơi bạn yêu thích để chuẩn bị cho chuyến đi tiếp theo nhé!</p>
+                  <Link
+                    to="/search-results"
+                    className="inline-block bg-[#0064a3] hover:bg-[#00508a] text-white font-bold px-6 py-2.5 rounded-xl text-sm transition-all hover:scale-105 active:scale-95 shadow-md"
+                  >
+                    Khám phá ngay
+                  </Link>
                 </div>
-              ))}
+              ) : (
+                wishlist.map((item) => (
+                  <div key={item.id} className="bg-white rounded-2xl border border-gray-200 overflow-hidden flex flex-col hover:shadow-lg transition-shadow">
+                    {/* Image Container */}
+                    <div className="relative h-48 w-full">
+                      <img src={item.image} alt={item.name} className="w-full h-full object-cover" />
+
+                      {/* Heart Button */}
+                      <button
+                        onClick={() => removeFromWishlist(item.id)}
+                        className="absolute top-3 right-3 bg-white/90 backdrop-blur-sm w-8 h-8 rounded-full flex items-center justify-center hover:bg-white hover:scale-110 active:scale-95 transition-all shadow-sm"
+                        title="Xóa khỏi danh sách yêu thích"
+                      >
+                        <Heart className="w-4 h-4 text-red-500 fill-red-500" />
+                      </button>
+
+                      {/* Rating Tag */}
+                      <div className="absolute bottom-3 left-3 bg-[#0064a3] px-2.5 py-1 rounded shadow-sm flex items-center gap-1">
+                        <Star className="w-3.5 h-3.5 text-white fill-white" />
+                        <span className="text-xs font-bold text-white">
+                          {item.rating} <span className="font-normal">({item.reviews} Đánh giá)</span>
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Card Details */}
+                    <div className="p-4 flex flex-col flex-1">
+                      <h3 className="font-bold text-gray-900 text-base mb-1 leading-tight">{item.name}</h3>
+
+                      <div className="flex items-center text-gray-500 text-sm mb-4">
+                        <MapPin className="w-3.5 h-3.5 mr-1 shrink-0" />
+                        {item.location}
+                      </div>
+
+                      <div className="flex-1" />
+
+                      {/* Footer Card */}
+                      <div className="flex justify-between items-center">
+                        <div>
+                          <span className="text-xl font-bold text-gray-900">{formatPrice(item.price)}</span>
+                          <span className="text-gray-500 text-xs ml-1">/ đêm</span>
+                        </div>
+                        <Link
+                          to={`/hotel/${item.id}`}
+                          className="bg-[#0064a3] hover:bg-[#00508a] text-white font-bold px-4 py-2 rounded-lg text-sm transition-colors text-center"
+                        >
+                          Xem chi tiết
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
 

@@ -5,10 +5,11 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useWishlist } from '../../context/WishlistContext';
 import { 
   User, Bell, MapPin, Star, Check, Wifi, 
   Coffee, Waves, Dumbbell, Car, Utensils,
-  ArrowLeft, Snowflake, Square
+  ArrowLeft, Snowflake, Square, Heart
 } from 'lucide-react';
 import { hotelService } from '../../services/hotelService';
 
@@ -37,6 +38,7 @@ const RoomDetail = () => {
   // Lấy ID khách sạn từ URL (ví dụ: /hotel/hl1 → id = "hl1")
   const { id } = useParams();
   const { user } = useAuth();
+  const { toggleWishlist, isInWishlist } = useWishlist();
   // Lấy query params (được truyền từ trang SearchResults)
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
@@ -82,6 +84,7 @@ const RoomDetail = () => {
             id: raw.slug,
             name: raw.name,
             slug: raw.slug,
+            type: raw.propertyType === 'hotel' || raw.property_type === 'hotel' ? 'Khách sạn' : raw.propertyType === 'resort' || raw.property_type === 'resort' ? 'Resort' : 'Biệt thự',
             description: raw.description || "Chưa có mô tả chi tiết.",
             location: `${raw.address || ''}${raw.district ? `, ${raw.district}` : ''}, ${raw.city || ''}`,
             rating: raw.starRating || 4,
@@ -254,7 +257,24 @@ const RoomDetail = () => {
 
         {/* 3. Tiêu đề, đánh giá sao, địa điểm, số phòng còn trống */}
         <div className="mb-4">
-          <h1 className="text-4xl font-bold text-[#403B69] mb-4">{hotel.name}</h1>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-4">
+            <h1 className="text-4xl font-bold text-[#403B69]">{hotel.name}</h1>
+            <button
+              onClick={() => toggleWishlist(hotel)}
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0 self-start md:self-auto ${
+                isInWishlist(hotel.id)
+                  ? 'bg-red-50 border-red-200 text-red-600'
+                  : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
+              }`}
+            >
+              <Heart
+                className={`w-5 h-5 transition-all duration-300 ${
+                  isInWishlist(hotel.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-500'
+                }`}
+              />
+              <span>{isInWishlist(hotel.id) ? 'Đã yêu thích' : 'Lưu vào yêu thích'}</span>
+            </button>
+          </div>
           <div className="flex items-center text-gray-600 text-sm space-x-4 mb-6">
             <div className="flex items-center">
               <Star className="w-4 h-4 fill-black text-black mr-1" />

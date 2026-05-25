@@ -11,6 +11,8 @@ import './index.css'
 import App from './App.jsx'
 // Import AuthProvider - cung cấp context xác thực (đăng nhập/đăng xuất) cho toàn bộ ứng dụng
 import { AuthProvider } from './context/AuthContext'
+// Import WishlistProvider - cung cấp context danh sách yêu thích cho toàn bộ ứng dụng
+import { WishlistProvider } from './context/WishlistContext'
 
 // Khởi tạo ứng dụng React và render vào phần tử DOM có id="root"
 // StrictMode: Bọc ứng dụng để phát hiện lỗi tiềm ẩn khi phát triển
@@ -18,7 +20,9 @@ import { AuthProvider } from './context/AuthContext'
 createRoot(document.getElementById('root')).render(
   <StrictMode>
     <AuthProvider>
-      <App />
+      <WishlistProvider>
+        <App />
+      </WishlistProvider>
     </AuthProvider>
   </StrictMode>,
 )
