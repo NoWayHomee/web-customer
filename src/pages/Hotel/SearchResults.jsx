@@ -67,17 +67,21 @@ const SearchResults = () => {
           rooms_needed: roomsParam || undefined,
         };
 
-        if (initialStartDate) {
-          queryParams.check_in = initialStartDate.toISOString().split('T')[0];
+        const checkIn = parseSafeDate(startParam);
+        const checkOut = parseSafeDate(endParam);
+
+        if (checkIn) {
+          queryParams.check_in = checkIn.toISOString().split('T')[0];
         }
-        if (initialEndDate) {
-          queryParams.check_out = initialEndDate.toISOString().split('T')[0];
+        if (checkOut) {
+          queryParams.check_out = checkOut.toISOString().split('T')[0];
         }
 
         const response = await hotelService.searchHotels(queryParams);
         if (active) {
-          const data = response.data?.items || response.data || [];
-          setBackendHotels(data);
+          // Backend wraps response as: { statusCode, message, data: { items: [...], meta: {...} } }
+        const data = response.data?.data?.items || response.data?.items || [];
+          setBackendHotels(Array.isArray(data) ? data : []);
         }
       } catch (err) {
         console.error("Lỗi khi tải danh sách khách sạn từ Backend:", err);
@@ -328,7 +332,7 @@ const SearchResults = () => {
     }
 
     return result;
-  }, [selectedStars, priceRange, selectedAmenities, selectedTypes, selectedPayments, beachRange, centerRange, selectedGuestRatings, selectedAreas, selectedBedTypes, sortBy, locationParam]);
+  }, [mappedHotels, selectedStars, priceRange, selectedAmenities, selectedTypes, selectedPayments, beachRange, centerRange, selectedGuestRatings, selectedAreas, selectedBedTypes, sortBy, locationParam]);
 
   // Hàm định dạng giá tiền (ví dụ: 1500000 → "1.500.000 ₫")
   const formatPrice = (price) => {
