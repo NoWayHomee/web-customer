@@ -9,7 +9,8 @@ import { useWishlist } from '../../context/WishlistContext';
 import { 
   User, Bell, MapPin, Star, Check, Wifi, 
   Coffee, Waves, Dumbbell, Car, Utensils,
-  ArrowLeft, Snowflake, Square, Heart
+  ArrowLeft, Snowflake, Square, Heart,
+  Maximize, BedDouble, Users, Clock, Info, PawPrint, Ban
 } from 'lucide-react';
 import { hotelService } from '../../services/hotelService';
 
@@ -300,21 +301,62 @@ const RoomDetail = () => {
         {/* 5. Bố cục 2 cột: Mô tả & Tiện nghi (trái) | Thẻ đặt phòng (phải) */}
         <div className="flex flex-col lg:flex-row gap-12 relative">
           
-          {/* === CỘT TRÁI: Mô tả khách sạn + Danh sách tiện nghi với icon === */}
-          <div className="flex-1">
-            <div className="mb-12">
-              <p className="text-gray-900 text-[16px] leading-7">
-                {hotel.description}
-              </p>
+          {/* === CỘT TRÁI: Các thông tin chi tiết của khách sạn === */}
+          <div className="flex-1 space-y-12">
+            
+            {/* 1. Tổng quan */}
+            <div>
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Tổng quan</h2>
+              <div className="grid grid-cols-3 gap-4">
+                <div className="bg-[#f8f9fa] rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 bg-[#e8eaf6] rounded-full flex items-center justify-center mb-3 text-[#3F3D7C]">
+                    <Maximize className="w-6 h-6" />
+                  </div>
+                  <div className="text-sm text-gray-500 mb-1">Diện tích</div>
+                  <div className="font-bold text-gray-900">29 m²</div>
+                </div>
+                <div className="bg-[#f8f9fa] rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 bg-[#e8eaf6] rounded-full flex items-center justify-center mb-3 text-[#3F3D7C]">
+                    <BedDouble className="w-6 h-6" />
+                  </div>
+                  <div className="text-sm text-gray-500 mb-1">Loại giường</div>
+                  <div className="font-bold text-gray-900 text-sm">1 giường đôi</div>
+                </div>
+                <div className="bg-[#f8f9fa] rounded-2xl p-4 flex flex-col items-center justify-center text-center">
+                  <div className="w-12 h-12 bg-[#e8eaf6] rounded-full flex items-center justify-center mb-3 text-[#3F3D7C]">
+                    <Users className="w-6 h-6" />
+                  </div>
+                  <div className="text-sm text-gray-500 mb-1">Số người</div>
+                  <div className="font-bold text-gray-900">Tối đa 2</div>
+                </div>
+              </div>
             </div>
 
-            <div className="w-full border-t border-gray-100 mb-10"></div>
+            <div className="w-full border-t border-gray-100"></div>
 
+            {/* 2. Mô tả */}
             <div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-8">Tiện nghi</h2>
-              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-10">
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Mô tả</h2>
+              <div className="bg-[#f8f9fa] rounded-2xl p-6">
+                <p className="text-gray-600 text-[15px] leading-relaxed mb-4">
+                  {hotel.description.length > 200 ? hotel.description.substring(0, 200) + '...' : hotel.description}
+                </p>
+                {hotel.description.length > 200 && (
+                  <button className="text-[#3F3D7C] font-bold text-sm hover:underline">
+                    Đọc thêm
+                  </button>
+                )}
+              </div>
+            </div>
+
+            <div className="w-full border-t border-gray-100"></div>
+
+            {/* 3. Tiện nghi */}
+            <div>
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Tiện nghi</h2>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8">
                 {hotel.amenities.map((amenity, idx) => (
-                  <div key={idx} className="flex items-center space-x-4 text-gray-900 text-[15px]">
+                  <div key={idx} className="flex items-center space-x-3 text-gray-900 text-[15px]">
                     <span>
                       {amenityIcons[amenity] || <Check className="w-5 h-5 text-gray-600" />}
                     </span>
@@ -323,6 +365,179 @@ const RoomDetail = () => {
                 ))}
               </div>
             </div>
+
+            <div className="w-full border-t border-gray-100"></div>
+
+            {/* 4. Kết nối giao thông */}
+            <div>
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Kết nối giao thông</h2>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <MapPin className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>trung tâm thành phố</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">200 m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <MapPin className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>Nha Tu Hoa Lo</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">310 m</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full border-t border-gray-100"></div>
+
+            {/* 5. Địa điểm lân cận */}
+            <div>
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Địa điểm lân cận</h2>
+              <div className="space-y-4">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <MapPin className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>SHB</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">111 m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <MapPin className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>Cơm Chay Nàng Tấm</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">143 m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <Utensils className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>Nhà Hàng Chay Phương Nam</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">149 m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <MapPin className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>Techcombank</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">150 m</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-700">
+                    <Coffee className="w-5 h-5 mr-3 text-[#3F3D7C]" />
+                    <span>Orick Coffee</span>
+                  </div>
+                  <span className="text-gray-500 text-sm">154 m</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full border-t border-gray-100"></div>
+
+            {/* 6. Chính sách lưu trú */}
+            <div>
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Chính sách lưu trú</h2>
+              <div className="bg-[#f8f9fa] rounded-2xl p-6 space-y-5">
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-500">
+                    <Clock className="w-5 h-5 mr-3" />
+                    <span>Nhận phòng</span>
+                  </div>
+                  <span className="font-bold text-gray-900">Từ 06:00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-500">
+                    <Clock className="w-5 h-5 mr-3" />
+                    <span>Trả phòng</span>
+                  </div>
+                  <span className="font-bold text-gray-900">Trước 04:00</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-500">
+                    <Info className="w-5 h-5 mr-3" />
+                    <span>Hủy phòng</span>
+                  </div>
+                  <span className="font-bold text-gray-900">Miễn phí hủy</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-500">
+                    <PawPrint className="w-5 h-5 mr-3" />
+                    <span>Vật nuôi</span>
+                  </div>
+                  <span className="font-bold text-gray-900">Cho phép mang theo</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-500">
+                    <Ban className="w-5 h-5 mr-3" />
+                    <span>Hút thuốc</span>
+                  </div>
+                  <span className="font-bold text-gray-900">Được phép ở khu quy định</span>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div className="flex items-center text-gray-500">
+                    <Users className="w-5 h-5 mr-3" />
+                    <span>Trẻ em</span>
+                  </div>
+                  <span className="font-bold text-gray-900">Chào đón trẻ em</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="w-full border-t border-gray-100"></div>
+
+            {/* 7. Các loại phòng trống */}
+            <div>
+              <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Các loại phòng trống</h2>
+              <div className="space-y-4">
+                {/* Room 1 */}
+                <div className="bg-[#f8f9fa] border border-gray-100 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Studio Tiêu Chuẩn (Standard Studio)</h3>
+                  <div className="flex items-center text-gray-500 text-sm space-x-3 mb-2">
+                    <div className="flex items-center"><Maximize className="w-4 h-4 mr-1" /> 29 m²</div>
+                    <span>•</span>
+                    <div className="flex items-center"><BedDouble className="w-4 h-4 mr-1" /> 1 giường đôi</div>
+                  </div>
+                  <div className="flex items-center text-gray-500 text-sm mb-6">
+                    <Users className="w-4 h-4 mr-1" /> Phù hợp cho 2 người
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
+                    <div>
+                      <div className="text-[#3F3D7C] text-2xl font-bold">3.000.000 đ</div>
+                      <div className="text-gray-500 text-sm">/ đêm</div>
+                    </div>
+                    <button className="bg-[#3F3D7C] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-[#34326b] transition-all">
+                      Chọn phòng
+                    </button>
+                  </div>
+                </div>
+
+                {/* Room 2 */}
+                <div className="bg-[#f8f9fa] border border-gray-100 rounded-2xl p-6">
+                  <h3 className="text-xl font-bold text-gray-900 mb-3">Deluxe Room</h3>
+                  <div className="flex items-center text-gray-500 text-sm space-x-3 mb-2">
+                    <div className="flex items-center"><Maximize className="w-4 h-4 mr-1" /> 30 m²</div>
+                    <span>•</span>
+                    <div className="flex items-center"><BedDouble className="w-4 h-4 mr-1" /> 3 giường</div>
+                  </div>
+                  <div className="flex items-center text-gray-500 text-sm mb-6">
+                    <Users className="w-4 h-4 mr-1" /> Phù hợp cho 2 người
+                  </div>
+                  
+                  <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
+                    <div>
+                      <div className="text-[#3F3D7C] text-2xl font-bold">15.000.000 đ</div>
+                      <div className="text-gray-500 text-sm">/ đêm</div>
+                    </div>
+                    <button className="bg-[#3F3D7C] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-[#34326b] transition-all">
+                      Chọn phòng
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
           </div>
 
           {/* === CỘT PHẢI: Thẻ đặt phòng (Booking Card) ===
