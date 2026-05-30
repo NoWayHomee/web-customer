@@ -338,8 +338,8 @@ const SearchResults = () => {
 
   return (
     <div className="min-h-screen bg-[#f8f9fa] font-sans text-gray-900">
-      {/* ===== HEADER: Thanh điều hướng - cố định trên cùng (sticky) ===== */}
-      <header className="bg-white py-4 px-8 md:px-16 flex justify-between items-center border-b border-gray-200 sticky top-0 z-50">
+      {/* ===== HEADER: Thanh điều hướng trên cùng ===== */}
+      <header className="bg-[#e5e5e5] py-4 px-8 md:px-16 flex justify-between items-center shadow-sm relative z-50">
         <Link to="/" className="text-3xl font-serif font-bold text-[#403B69]">
           NoWayHome
         </Link>

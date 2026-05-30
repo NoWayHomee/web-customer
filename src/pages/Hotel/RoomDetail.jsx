@@ -45,11 +45,11 @@ const RoomDetail = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // State lưu trữ dữ liệu khách sạn từ backend
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [selectedRoom, setSelectedRoom] = useState(null);
 
   // === Lấy thông tin ngày nhận/trả phòng từ URL ===
   const startParam = searchParams.get('startDate');
@@ -108,10 +108,38 @@ const RoomDetail = () => {
               ? Math.min(...raw.roomTypes.map(rt => Number(rt.total_price || rt.basePrice || 0)))
               : 850000,
 
-            roomsLeft: raw.roomTypes?.reduce((sum, rt) => sum + (rt.min_available_qty || rt.totalRooms || 0), 0) || 5
+            roomsLeft: raw.roomTypes?.reduce((sum, rt) => sum + (rt.min_available_qty || rt.totalRooms || 0), 0) || 5,
+            
+            roomTypes: raw.roomTypes?.length > 0 ? raw.roomTypes.map(rt => ({
+              id: rt.id || Math.random(),
+              name: rt.name,
+              price: Number(rt.total_price || rt.basePrice || 0),
+              area: rt.area || 30,
+              bed: rt.bedType || '1 giường đôi',
+              capacity: rt.maxGuests || 2
+            })) : [
+              {
+                id: 1,
+                name: 'Studio Tiêu Chuẩn (Standard Studio)',
+                price: 3000000,
+                area: 29,
+                bed: '1 giường đôi',
+                capacity: 2
+              },
+              {
+                id: 2,
+                name: 'Deluxe Room',
+                price: 15000000,
+                area: 30,
+                bed: '3 giường',
+                capacity: 2
+              }
+            ]
           };
 
           setHotel(mapped);
+          // Không chọn sẵn phòng nào lúc ban đầu
+          // setSelectedRoom(mapped.roomTypes[0]);
         }
       } catch (err) {
         console.error("Lỗi khi tải chi tiết khách sạn từ Backend:", err);
@@ -172,11 +200,20 @@ const RoomDetail = () => {
     );
   }
 
+  // Lấy giá hiện tại (dựa trên phòng đã chọn hoặc mặc định)
+  const currentPrice = selectedRoom ? selectedRoom.price : hotel.price;
+
   // Tính tổng giá = giá/đêm × số đêm × số phòng
-  const totalPrice = hotel.price * nights * rooms;
+  const totalPrice = currentPrice * nights * rooms;
 
   // Hàm xử lý đặt phòng: Chuyển sang trang thanh toán và truyền dữ liệu qua React Router state
   const handleBooking = () => {
+    if (!selectedRoom) {
+      alert('Vui lòng chọn một loại phòng trước khi đặt!');
+      // Có thể dùng window.scrollTo để cuộn xuống phần chọn phòng nếu muốn
+      return;
+    }
+
     // Kiểm tra đăng nhập trước khi cho phép đặt phòng
     if (!user) {
       alert('Vui lòng đăng nhập để tiếp tục đặt phòng!');
@@ -187,6 +224,7 @@ const RoomDetail = () => {
     navigate('/payment', {
       state: {
         hotel,
+        selectedRoom,
         bookingData: {
           startDate,
           endDate,
@@ -201,23 +239,21 @@ const RoomDetail = () => {
 
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900">
-      {/* ===== HEADER: Thanh điều hướng - cố định trên cùng ===== */}
-      <header className="bg-white py-4 px-8 md:px-16 flex justify-between items-center border-b border-gray-100 sticky top-0 z-50">
-        <Link to="/" className="text-3xl font-bold text-[#403B69]">
+      {/* ===== HEADER: Thanh điều hướng trên cùng ===== */}
+      <header className="bg-[#e5e5e5] py-4 px-8 md:px-16 flex justify-between items-center shadow-sm relative z-50">
+        <Link to="/" className="text-3xl font-serif font-bold text-[#403B69]">
           NoWayHome
         </Link>
         <div className="flex items-center space-x-6">
           {user ? (
             <>
-              <span className="font-bold text-gray-800 text-lg">
+              <span className="font-bold text-[#403B69] hidden md:inline-block">
                 Xin chào, {user.name}!
               </span>
               <Link to="/profile" className="text-gray-800 hover:text-black transition-transform hover:scale-110">
-                <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                  <User className="w-6 h-6" />
-                </div>
+                <User className="w-6 h-6" />
               </Link>
-              <button className="text-gray-800">
+              <button className="text-gray-800 hover:text-black relative transition-transform hover:scale-110">
                 <Bell className="w-6 h-6" />
               </button>
             </>
@@ -494,51 +530,38 @@ const RoomDetail = () => {
             <div>
               <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Các loại phòng trống</h2>
               <div className="space-y-4">
-                {/* Room 1 */}
-                <div className="bg-[#f8f9fa] border border-gray-100 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">Studio Tiêu Chuẩn (Standard Studio)</h3>
-                  <div className="flex items-center text-gray-500 text-sm space-x-3 mb-2">
-                    <div className="flex items-center"><Maximize className="w-4 h-4 mr-1" /> 29 m²</div>
-                    <span>•</span>
-                    <div className="flex items-center"><BedDouble className="w-4 h-4 mr-1" /> 1 giường đôi</div>
-                  </div>
-                  <div className="flex items-center text-gray-500 text-sm mb-6">
-                    <Users className="w-4 h-4 mr-1" /> Phù hợp cho 2 người
-                  </div>
+                {hotel.roomTypes.map((room) => {
+                  const isSelected = selectedRoom?.id === room.id;
+                  return (
+                    <div 
+                      key={room.id}
+                      className={`bg-[#f8f9fa] rounded-2xl p-6 transition-all duration-200 ${isSelected ? 'border-2 border-[#3F3D7C] shadow-[0_4px_20px_rgba(63,61,124,0.15)] bg-blue-50/30' : 'border border-gray-100 hover:border-gray-300'}`}
+                    >
+                      <h3 className="text-xl font-bold text-gray-900 mb-3">{room.name}</h3>
+                      <div className="flex items-center text-gray-500 text-sm space-x-3 mb-2">
+                        <div className="flex items-center"><Maximize className="w-4 h-4 mr-1" /> {room.area} m²</div>
+                        <span>•</span>
+                        <div className="flex items-center"><BedDouble className="w-4 h-4 mr-1" /> {room.bed}</div>
+                      </div>
+                      <div className="flex items-center text-gray-500 text-sm mb-6">
+                        <Users className="w-4 h-4 mr-1" /> Phù hợp cho {room.capacity} người
+                      </div>
 
-                  <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
-                    <div>
-                      <div className="text-[#3F3D7C] text-2xl font-bold">3.000.000 đ</div>
-                      <div className="text-gray-500 text-sm">/ đêm</div>
+                      <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
+                        <div>
+                          <div className="text-[#3F3D7C] text-2xl font-bold">{formatPrice(room.price).replace(" ₫", " đ")}</div>
+                          <div className="text-gray-500 text-sm">/ đêm</div>
+                        </div>
+                        <button 
+                          onClick={() => setSelectedRoom(isSelected ? null : room)}
+                          className={`font-bold py-2.5 px-6 rounded-xl transition-all ${isSelected ? 'bg-white text-[#3F3D7C] border border-[#3F3D7C]' : 'bg-[#3F3D7C] text-white hover:bg-[#34326b]'}`}
+                        >
+                          {isSelected ? 'Đã chọn' : 'Chọn phòng'}
+                        </button>
+                      </div>
                     </div>
-                    <button className="bg-[#3F3D7C] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-[#34326b] transition-all">
-                      Chọn phòng
-                    </button>
-                  </div>
-                </div>
-
-                {/* Room 2 */}
-                <div className="bg-[#f8f9fa] border border-gray-100 rounded-2xl p-6">
-                  <h3 className="text-xl font-bold text-gray-900 mb-3">Deluxe Room</h3>
-                  <div className="flex items-center text-gray-500 text-sm space-x-3 mb-2">
-                    <div className="flex items-center"><Maximize className="w-4 h-4 mr-1" /> 30 m²</div>
-                    <span>•</span>
-                    <div className="flex items-center"><BedDouble className="w-4 h-4 mr-1" /> 3 giường</div>
-                  </div>
-                  <div className="flex items-center text-gray-500 text-sm mb-6">
-                    <Users className="w-4 h-4 mr-1" /> Phù hợp cho 2 người
-                  </div>
-
-                  <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
-                    <div>
-                      <div className="text-[#3F3D7C] text-2xl font-bold">15.000.000 đ</div>
-                      <div className="text-gray-500 text-sm">/ đêm</div>
-                    </div>
-                    <button className="bg-[#3F3D7C] text-white font-bold py-2.5 px-6 rounded-xl hover:bg-[#34326b] transition-all">
-                      Chọn phòng
-                    </button>
-                  </div>
-                </div>
+                  );
+                })}
               </div>
             </div>
 
@@ -549,8 +572,9 @@ const RoomDetail = () => {
               sticky: cố định khi cuộn trang */}
           <div className="w-full lg:w-[400px] flex-shrink-0">
             <div className="bg-white p-8 rounded-3xl shadow-[0_4px_30px_rgba(0,0,0,0.08)] border border-gray-200 sticky top-28">
-              <div className="mb-8">
-                <span className="text-3xl font-bold text-gray-900 tracking-tight">VND {hotel.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</span>
+              <div className="mb-8 transition-all duration-300">
+                {!selectedRoom && <span className="text-gray-500 text-sm mr-2">Từ</span>}
+                <span className="text-3xl font-bold text-gray-900 tracking-tight">VND {currentPrice.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</span>
                 <span className="text-gray-500 text-sm ml-2">/ đêm</span>
               </div>
 
@@ -573,9 +597,9 @@ const RoomDetail = () => {
 
               <button
                 onClick={handleBooking}
-                className="w-full bg-[#3F3D7C] text-white font-bold text-lg py-5 rounded-2xl shadow-lg hover:bg-[#34326b] transition-all mb-4"
+                className={`w-full font-bold text-lg py-5 rounded-2xl shadow-lg transition-all mb-4 ${selectedRoom ? 'bg-[#3F3D7C] text-white hover:bg-[#34326b]' : 'bg-gray-200 text-gray-500 cursor-not-allowed'}`}
               >
-                Đặt phòng ngay
+                {selectedRoom ? 'Đặt phòng ngay' : 'Vui lòng chọn phòng'}
               </button>
 
               <div className="text-center mt-2">

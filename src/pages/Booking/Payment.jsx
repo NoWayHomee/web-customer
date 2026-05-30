@@ -27,7 +27,7 @@ const Payment = () => {
 
   // === Lấy dữ liệu khách sạn và thông tin đặt phòng từ trang RoomDetail ===
   // Nếu không có dữ liệu (truy cập trực tiếp URL) → sử dụng dữ liệu mặc định
-  const { hotel, bookingData } = location.state || {
+  const { hotel, bookingData, selectedRoom } = location.state || {
     hotel: {
       name: "Halong Elegance",
       price: 3200000,
@@ -43,6 +43,9 @@ const Payment = () => {
       rooms: 1
     }
   };
+
+  const currentPrice = selectedRoom?.price || hotel.price;
+  const currentRoomName = selectedRoom?.name || 'Studio Tiêu Chuẩn (Standard Studio)';
 
   // === State form thông tin liên hệ người đặt phòng ===
   const [contactInfo, setContactInfo] = useState({
@@ -71,7 +74,7 @@ const Payment = () => {
   // === Tính toán chi phí ===
   const serviceFee = 1200000;  // Phí dịch vụ cố định
   const taxRate = 0.1;         // Thuế 10%
-  const subtotal = hotel.price * bookingData.nights * bookingData.rooms;  // Tiền phòng = giá/đêm × số đêm × số phòng
+  const subtotal = currentPrice * bookingData.nights * bookingData.rooms;  // Tiền phòng = giá/đêm × số đêm × số phòng
   const tax = subtotal * taxRate;            // Thuế
   const total = subtotal + serviceFee + tax; // Tổng cộng
 
@@ -156,32 +159,32 @@ const Payment = () => {
   return (
     <div className="min-h-screen bg-white font-sans text-gray-900 relative">
       {/* ===== HEADER ===== */}
-      <header className="bg-white py-4 px-8 md:px-16 flex justify-between items-center border-b border-gray-100 sticky top-0 z-40">
-        <Link to="/" className="text-3xl font-bold text-[#403B69]">
+      <header className="bg-[#e5e5e5] py-4 px-8 md:px-16 flex justify-between items-center shadow-sm relative z-50">
+        <Link to="/" className="text-3xl font-serif font-bold text-[#403B69]">
           NoWayHome
         </Link>
         <div className="flex items-center space-x-6">
           {user ? (
             <>
-              <span className="font-bold text-gray-800 text-lg">
+              <span className="font-bold text-[#403B69] hidden md:inline-block">
                 Xin chào, {user.name}!
               </span>
-              <button className="text-gray-800">
-                <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                  <User className="w-6 h-6" />
-                </div>
-              </button>
-              <button className="text-gray-800">
+              <Link to="/profile" className="text-gray-800 hover:text-black transition-transform hover:scale-110">
+                <User className="w-6 h-6" />
+              </Link>
+              <button className="text-gray-800 hover:text-black relative transition-transform hover:scale-110">
                 <Bell className="w-6 h-6" />
               </button>
             </>
           ) : (
-            <div className="flex items-center space-x-4">
-              <span className="font-bold text-gray-800 text-lg">Xin chào, Khách!</span>
-              <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                <User className="w-6 h-6" />
-              </div>
-            </div>
+            <>
+              <Link to="/login" className="font-bold text-[#403B69] hover:underline">
+                Đăng nhập
+              </Link>
+              <Link to="/register" className="font-bold text-white bg-[#403B69] px-4 py-2 rounded-lg hover:bg-[#2d2a4a] transition-colors">
+                Đăng ký
+              </Link>
+            </>
           )}
         </div>
       </header>
@@ -391,7 +394,7 @@ const Payment = () => {
               </div>
               <div className="px-8 pb-8">
                 <div className="mb-6">
-                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">TOÀN BỘ CĂN HỘ</p>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mb-1">{currentRoomName}</p>
                   <h3 className="text-2xl font-bold text-[#403B69]">{hotel.name}</h3>
                 </div>
 
@@ -412,7 +415,7 @@ const Payment = () => {
                   <h4 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">CHI TIẾT GIÁ</h4>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between">
-                      <span className="text-gray-600">{formatPrice(hotel.price)} × {bookingData.nights}</span>
+                      <span className="text-gray-600">{formatPrice(currentPrice)} × {bookingData.nights}</span>
                       <span className="font-medium text-gray-900">{formatPrice(subtotal)}</span>
                     </div>
                     <div className="flex justify-between">
@@ -532,7 +535,7 @@ const Payment = () => {
           transaction={{
             id: 'NWH-MPSFYFBD',
             name: hotel.name,
-            roomName: 'Studio Tiêu Chuẩn (Standard Studio)',
+            roomName: currentRoomName,
             checkIn: formatDateWithSlash(bookingData.startDate),
             checkOut: formatDateWithSlash(bookingData.endDate),
             guests: `${bookingData.adults + bookingData.children} người`,

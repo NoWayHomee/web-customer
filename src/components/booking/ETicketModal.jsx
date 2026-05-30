@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { X, Download, Trash2, QrCode } from 'lucide-react';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 
 const ETicketModal = ({ transaction, onClose, onCancelRequest }) => {
   const [showCancelForm, setShowCancelForm] = useState(false);
@@ -46,20 +46,23 @@ const ETicketModal = ({ transaction, onClose, onCancelRequest }) => {
     if (!ticketRef.current) return;
     
     try {
-      const canvas = await html2canvas(ticketRef.current, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#f8f9fc'
+      // Ẩn thanh cuộn (overflow) tạm thời nếu có để ảnh render đẹp hơn
+      const node = ticketRef.current;
+      const dataUrl = await toPng(node, {
+        quality: 1,
+        backgroundColor: '#f8f9fc',
+        pixelRatio: 2,
       });
       
-      const image = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.href = image;
+      link.href = dataUrl;
       link.download = `e-ticket-${transaction.id || '41'}.png`;
+      document.body.appendChild(link);
       link.click();
+      document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading ticket:', error);
-      alert('Có lỗi xảy ra khi lưu vé!');
+      alert('Có lỗi xảy ra khi lưu vé: ' + (error.message || error));
     }
   };
 

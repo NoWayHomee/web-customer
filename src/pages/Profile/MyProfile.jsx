@@ -34,9 +34,9 @@ const MyProfile = () => {
               <span className="font-bold text-[#403B69] hidden md:inline-block">
                 Xin chào, {user.name}!
               </span>
-              <button className="text-gray-800 hover:text-black transition-transform hover:scale-110">
+              <Link to="/profile" className="text-gray-800 hover:text-black transition-transform hover:scale-110">
                 <User className="w-6 h-6" />
-              </button>
+              </Link>
               <button className="text-gray-800 hover:text-black relative transition-transform hover:scale-110">
                 <Bell className="w-6 h-6" />
               </button>
