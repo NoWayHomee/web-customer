@@ -6,8 +6,8 @@ import React, { useState, useEffect } from 'react';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
-import { 
-  User, Bell, MapPin, Star, Check, Wifi, 
+import {
+  User, Bell, MapPin, Star, Check, Wifi,
   Coffee, Waves, Dumbbell, Car, Utensils,
   ArrowLeft, Snowflake, Square, Heart,
   Maximize, BedDouble, Users, Clock, Info, PawPrint, Ban
@@ -44,7 +44,7 @@ const RoomDetail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
-  
+
   // State lưu trữ dữ liệu khách sạn từ backend
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -56,7 +56,7 @@ const RoomDetail = () => {
   const endParam = searchParams.get('endDate');
   const startDate = startParam && !isNaN(Date.parse(startParam)) ? new Date(startParam) : null;
   const endDate = endParam && !isNaN(Date.parse(endParam)) ? new Date(endParam) : null;
-  
+
   // Lấy số lượng khách từ URL params
   const adults = parseInt(searchParams.get('adults')) || 2;
   const children = parseInt(searchParams.get('children')) || 0;
@@ -76,11 +76,11 @@ const RoomDetail = () => {
         if (endParam) {
           queryParams.check_out = endParam.split('T')[0];
         }
-        
+
         const response = await hotelService.getHotelDetail(id, queryParams);
         if (active) {
           const raw = response.data;
-          
+
           // Ánh xạ đối tượng Property từ backend sang cấu trúc UI
           const mapped = {
             id: raw.slug,
@@ -91,26 +91,26 @@ const RoomDetail = () => {
             location: `${raw.address || ''}${raw.district ? `, ${raw.district}` : ''}, ${raw.city || ''}`,
             rating: raw.starRating || 4,
             reviews: raw.totalReviews || 12,
-            
+
             // Map danh sách ảnh
-            images: raw.media?.length > 0 
-              ? raw.media.map(m => m.url) 
+            images: raw.media?.length > 0
+              ? raw.media.map(m => m.url)
               : ['https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80', 'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80', 'https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80'],
             image: raw.media?.find(m => m.isCover)?.url || raw.media?.[0]?.url || 'https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=1200&q=80',
-            
+
             // Map danh sách tiện nghi
-            amenities: raw.amenities?.length > 0 
-              ? raw.amenities.map(a => a.amenity?.name) 
+            amenities: raw.amenities?.length > 0
+              ? raw.amenities.map(a => a.amenity?.name)
               : ["Free Wi-Fi", "Swimming Pool", "Air Conditioning", "Restaurant"],
-              
+
             // Tính toán giá từ các loại phòng (chọn giá thấp nhất)
-            price: raw.roomTypes?.length > 0 
+            price: raw.roomTypes?.length > 0
               ? Math.min(...raw.roomTypes.map(rt => Number(rt.total_price || rt.basePrice || 0)))
               : 850000,
-            
+
             roomsLeft: raw.roomTypes?.reduce((sum, rt) => sum + (rt.min_available_qty || rt.totalRooms || 0), 0) || 5
           };
-          
+
           setHotel(mapped);
         }
       } catch (err) {
@@ -135,8 +135,8 @@ const RoomDetail = () => {
 
   // === Tính số đêm lưu trú ===
   // Nếu có ngày hợp lệ → tính chênh lệch, nếu không → mặc định 1 đêm
-  const nights = (startDate && endDate && endDate > startDate) 
-    ? Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24)) 
+  const nights = (startDate && endDate && endDate > startDate)
+    ? Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24))
     : 1;
 
   // Hàm định dạng giá tiền (ví dụ: 2500000 → "2.500.000 ₫")
@@ -184,18 +184,18 @@ const RoomDetail = () => {
       return;
     }
 
-    navigate('/payment', { 
-      state: { 
-        hotel, 
-        bookingData: { 
-          startDate, 
-          endDate, 
-          adults, 
-          children, 
-          nights, 
-          rooms 
-        } 
-      } 
+    navigate('/payment', {
+      state: {
+        hotel,
+        bookingData: {
+          startDate,
+          endDate,
+          adults,
+          children,
+          nights,
+          rooms
+        }
+      }
     });
   };
 
@@ -263,16 +263,14 @@ const RoomDetail = () => {
             <h1 className="text-4xl font-bold text-[#403B69]">{hotel.name}</h1>
             <button
               onClick={() => toggleWishlist(hotel)}
-              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0 self-start md:self-auto ${
-                isInWishlist(hotel.id)
+              className={`flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl border font-bold text-sm transition-all hover:scale-105 active:scale-95 shadow-sm shrink-0 self-start md:self-auto ${isInWishlist(hotel.id)
                   ? 'bg-red-50 border-red-200 text-red-600'
                   : 'bg-white border-gray-200 text-gray-700 hover:bg-gray-50'
-              }`}
+                }`}
             >
               <Heart
-                className={`w-5 h-5 transition-all duration-300 ${
-                  isInWishlist(hotel.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-500'
-                }`}
+                className={`w-5 h-5 transition-all duration-300 ${isInWishlist(hotel.id) ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-500'
+                  }`}
               />
               <span>{isInWishlist(hotel.id) ? 'Đã yêu thích' : 'Lưu vào yêu thích'}</span>
             </button>
@@ -301,10 +299,10 @@ const RoomDetail = () => {
 
         {/* 5. Bố cục 2 cột: Mô tả & Tiện nghi (trái) | Thẻ đặt phòng (phải) */}
         <div className="flex flex-col lg:flex-row gap-12 relative">
-          
+
           {/* === CỘT TRÁI: Các thông tin chi tiết của khách sạn === */}
           <div className="flex-1 space-y-12">
-            
+
             {/* 1. Tổng quan */}
             <div>
               <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Tổng quan</h2>
@@ -340,12 +338,12 @@ const RoomDetail = () => {
               <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Mô tả</h2>
               <div className="bg-[#f8f9fa] rounded-2xl p-6">
                 <p className="text-gray-600 text-[15px] leading-relaxed mb-4 whitespace-pre-line">
-                  {hotel.description.length > 200 && !isDescExpanded 
-                    ? hotel.description.substring(0, 200) + '...' 
+                  {hotel.description.length > 200 && !isDescExpanded
+                    ? hotel.description.substring(0, 200) + '...'
                     : hotel.description}
                 </p>
                 {hotel.description.length > 200 && (
-                  <button 
+                  <button
                     onClick={() => setIsDescExpanded(!isDescExpanded)}
                     className="text-[#3F3D7C] font-bold text-sm hover:underline"
                   >
@@ -507,7 +505,7 @@ const RoomDetail = () => {
                   <div className="flex items-center text-gray-500 text-sm mb-6">
                     <Users className="w-4 h-4 mr-1" /> Phù hợp cho 2 người
                   </div>
-                  
+
                   <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
                     <div>
                       <div className="text-[#3F3D7C] text-2xl font-bold">3.000.000 đ</div>
@@ -530,7 +528,7 @@ const RoomDetail = () => {
                   <div className="flex items-center text-gray-500 text-sm mb-6">
                     <Users className="w-4 h-4 mr-1" /> Phù hợp cho 2 người
                   </div>
-                  
+
                   <div className="border-t border-gray-200 pt-4 flex justify-between items-end">
                     <div>
                       <div className="text-[#3F3D7C] text-2xl font-bold">15.000.000 đ</div>
@@ -555,7 +553,7 @@ const RoomDetail = () => {
                 <span className="text-3xl font-bold text-gray-900 tracking-tight">VND {hotel.price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}</span>
                 <span className="text-gray-500 text-sm ml-2">/ đêm</span>
               </div>
-              
+
               <div className="border border-gray-200 rounded-2xl overflow-hidden mb-8">
                 <div className="flex border-b border-gray-200">
                   <div className="w-1/2 p-5 border-r border-gray-200 bg-white">
@@ -573,13 +571,13 @@ const RoomDetail = () => {
                 </div>
               </div>
 
-              <button 
+              <button
                 onClick={handleBooking}
                 className="w-full bg-[#3F3D7C] text-white font-bold text-lg py-5 rounded-2xl shadow-lg hover:bg-[#34326b] transition-all mb-4"
               >
                 Đặt phòng ngay
               </button>
-              
+
               <div className="text-center mt-2">
                 <p className="text-sm text-gray-500 font-medium">
                   You won't be charged yet

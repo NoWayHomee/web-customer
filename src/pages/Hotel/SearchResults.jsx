@@ -778,8 +778,8 @@ const SearchResults = () => {
                     >
                       <Heart
                         className={`w-5 h-5 transition-all duration-300 ${isInWishlist(hotel.id)
-                            ? 'text-red-500 fill-red-500 scale-110'
-                            : 'text-gray-600 hover:text-red-500'
+                          ? 'text-red-500 fill-red-500 scale-110'
+                          : 'text-gray-600 hover:text-red-500'
                           }`}
                       />
                     </button>

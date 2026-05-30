@@ -7,7 +7,7 @@ import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   User, Bell, CreditCard, Wallet, Landmark,
   X, CheckCircle, Calendar, Users, ShieldCheck,
-  ChevronRight
+  ChevronRight, MapPin, Ticket, Home
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import qrCodeImg from '../../assets/images/qr-code.png';
@@ -82,6 +82,16 @@ const Payment = () => {
     return `${d.getDate()} - ${d.getDate() + 1} Thg ${d.getMonth() + 1}, ${d.getFullYear()}`;
   };
 
+  const formatDateWithSlash = (date) => {
+    if (!date) return "";
+    const d = new Date(date);
+    return `${d.getDate()}/${d.getMonth() + 1}/${d.getFullYear()}`;
+  };
+
+  const formatPriceVND = (price) => {
+    return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ".") + " đ";
+  };
+
   // Xử lý xác nhận thanh toán: Kiểm tra validation rồi hiển thị modal thành công
   const handleConfirmPayment = () => {
     const newErrors = {};
@@ -111,19 +121,19 @@ const Payment = () => {
       } else if (!/^\d{16}$/.test(cardInfo.cardNumber.replace(/\s/g, ''))) {
         newErrors.cardNumber = 'Số thẻ không hợp lệ (16 số)';
       }
-      
+
       if (!cardInfo.expiryDate.trim()) {
         newErrors.expiryDate = 'Vui lòng nhập ngày hết hạn';
       } else if (!/^(0[1-9]|1[0-2])\/\d{2}$/.test(cardInfo.expiryDate)) {
         newErrors.expiryDate = 'Ngày hết hạn không hợp lệ (MM/YY)';
       }
-      
+
       if (!cardInfo.cvv.trim()) {
         newErrors.cvv = 'Vui lòng nhập CVV';
       } else if (!/^\d{3,4}$/.test(cardInfo.cvv)) {
         newErrors.cvv = 'CVV không hợp lệ';
       }
-      
+
       if (!cardInfo.cardName.trim()) {
         newErrors.cardName = 'Vui lòng nhập tên trên thẻ';
       }
@@ -440,36 +450,68 @@ const Payment = () => {
 
       {/* ===== MODAL THÀNH CÔNG: Hiển thị sau khi thanh toán =====
           Gồm: Thông báo chúc mừng, Mã đặt phòng, Trạng thái, Nút quay về trang chủ */}
+      {/* ===== MODAL THÀNH CÔNG: Hiển thị sau khi thanh toán ===== */}
       {showSuccessModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-6 animate-fadeIn">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 animate-fadeIn">
           <div className="absolute inset-0 bg-black/30 backdrop-blur-sm" onClick={() => setShowSuccessModal(false)}></div>
-          <div className="bg-white rounded-[2rem] w-full max-w-[600px] p-12 relative z-10 shadow-2xl animate-scaleIn">
-            <button
-              onClick={() => setShowSuccessModal(false)}
-              className="absolute top-8 right-8 text-gray-400 hover:text-gray-600 transition-colors"
-            >
-              <X className="w-6 h-6" />
-            </button>
-
-            <div className="space-y-6">
-              <h2 className="text-3xl font-bold text-gray-900 leading-tight">
-                🎉 Chúc mừng bạn, chuyến đi đã sẵn sàng!
+          <div className="bg-[#FAF9F6] rounded-[2rem] w-full max-w-[500px] p-6 sm:p-8 relative z-10 shadow-2xl animate-scaleIn max-h-[90vh] overflow-y-auto">
+            {/* Nội dung thông báo */}
+            <div className="flex flex-col items-center text-center space-y-2 mb-6 mt-2">
+              <h2 className="text-2xl font-bold text-gray-900 font-serif">
+                Đặt phòng thành công!
               </h2>
-              <div className="space-y-4 text-lg text-gray-700">
-                <p>Mọi thứ đã được xác nhận.</p>
-                <p>
-                  Chúng tôi vừa gửi thông tin chi tiết qua email <span className="font-bold italic">{contactInfo.email || "nguyenvan@example.com"}</span>.
-                </p>
-                <p>Mã đặt phòng: <span className="font-bold">#WANDER-9981</span></p>
-                <p className="flex items-center">
-                  Trạng thái: <span className="font-bold ml-2">Đã thanh toán</span>
+              <p className="text-gray-700 text-sm">
+                Mã đặt phòng: <span className="font-medium">#NWH-MPSFYFBD-H3ASYI</span>
+              </p>
+              <p className="text-gray-500 text-sm max-w-sm mx-auto mt-4 leading-relaxed">
+                Chúng tôi đã gửi email xác nhận cùng vé điện tử đến địa chỉ email của bạn. Cảm ơn bạn đã lựa chọn NoWayHome.
+              </p>
+            </div>
+
+            {/* Thẻ thông tin phòng */}
+            <div className="bg-white border border-gray-100 rounded-2xl p-6 mb-6 shadow-sm text-left">
+              <div className="mb-4">
+                <h3 className="text-lg font-bold text-gray-900 leading-snug">{hotel.name}</h3>
+                <p className="text-gray-500 text-sm flex items-center mt-2">
+                  <MapPin className="w-4 h-4 mr-1 text-gray-400" /> {hotel.location}
                 </p>
               </div>
+
+              <div className="h-px bg-gray-100 my-4 w-full"></div>
+
+              <div className="flex justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wide">Nhận phòng</p>
+                  <p className="font-bold text-gray-900 mt-1.5">{formatDateWithSlash(bookingData.startDate)}</p>
+                  <p className="text-gray-500 text-sm mt-0.5">14:00</p>
+                </div>
+                <div>
+                  <p className="text-[10px] font-bold text-gray-400 uppercase text-left tracking-wide">Trả phòng</p>
+                  <p className="font-bold text-gray-900 mt-1.5 text-left">{formatDateWithSlash(bookingData.endDate)}</p>
+                  <p className="text-gray-500 text-sm mt-0.5 text-left">12:00</p>
+                </div>
+              </div>
+
+              <div className="h-px bg-gray-100 my-4 w-full"></div>
+
+              <div className="flex justify-between items-center">
+                <p className="text-gray-500 text-sm">Tổng tiền</p>
+                <p className="text-lg font-bold text-[#3F3D7C]">{formatPriceVND(total)}</p>
+              </div>
+            </div>
+
+            {/* Các nút bấm */}
+            <div className="space-y-3">
+              <button
+                className="w-full bg-[#3F3D7C] text-white font-medium py-3.5 rounded-xl hover:bg-[#34326b] transition-colors flex items-center justify-center gap-2 text-sm"
+              >
+                <Ticket className="w-5 h-5" /> Xem vé điện tử
+              </button>
               <button
                 onClick={() => navigate('/')}
-                className="w-full mt-4 bg-[#3F3D7C] text-white font-bold py-4 rounded-xl shadow-lg hover:bg-[#34326b] transition-all transform active:scale-95 flex items-center justify-center gap-2"
+                className="w-full bg-white text-[#3F3D7C] border border-[#3F3D7C] font-medium py-3.5 rounded-xl hover:bg-gray-50 transition-colors flex items-center justify-center gap-2 text-sm"
               >
-                Quay lại trang chủ
+                <Home className="w-5 h-5" /> Về trang chủ
               </button>
             </div>
           </div>

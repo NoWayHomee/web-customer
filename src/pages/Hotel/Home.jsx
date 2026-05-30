@@ -404,7 +404,7 @@ const Home = () => {
                         <span className="text-yellow-700 font-bold text-sm">{hotel.rating}</span>
                       </div>
                     </div>
-                    
+
                     <div className="flex items-center text-gray-500 text-sm mb-4">
                       <MapPin className="w-4 h-4 mr-1" />
                       <span>{hotel.location}</span>
