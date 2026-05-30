@@ -6,10 +6,9 @@ import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
   User, Bell, ChevronRight, ChevronLeft,
-  Receipt, Heart, Settings, BedDouble
+  Receipt, Heart, Settings, BedDouble, Ticket
 } from 'lucide-react';
-
-
+import ETicketModal from '../../components/booking/ETicketModal';
 
 // ====== DỮ LIỆU MẪU - các giao dịch (khớp với ảnh thiết kế) ======
 const mockTransactions = [
@@ -46,6 +45,9 @@ const TransactionHistory = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
 
+  const [transactions, setTransactions] = useState(mockTransactions);
+  const [selectedTransaction, setSelectedTransaction] = useState(null);
+
   // Dropdown lọc trạng thái
   const [statusFilter, setStatusFilter] = useState('all');
   // Trang hiện tại
@@ -56,13 +58,25 @@ const TransactionHistory = () => {
     { value: 'all', label: 'Tất cả trạng thái' },
     { value: 'success', label: 'Thành công' },
     { value: 'processing', label: 'Đang xử lý' },
+    { value: 'cancel_pending', label: 'Chờ duyệt hủy' },
     { value: 'cancelled', label: 'Đã hủy' },
   ];
 
   // Lọc theo trạng thái
-  const filteredTransactions = mockTransactions.filter((t) =>
+  const filteredTransactions = transactions.filter((t) =>
     statusFilter === 'all' || t.status === statusFilter
   );
+
+  const handleCancelRequest = (transactionId) => {
+    setTransactions((prev) =>
+      prev.map((t) =>
+        t.id === transactionId ? { ...t, status: 'cancel_pending' } : t
+      )
+    );
+    setSelectedTransaction((prev) => 
+      prev?.id === transactionId ? { ...prev, status: 'cancel_pending' } : prev
+    );
+  };
 
   return (
     <div className="min-h-screen bg-[#F5F5F5] font-sans text-gray-900 flex flex-col">
@@ -239,6 +253,11 @@ const TransactionHistory = () => {
                           Thành công
                         </span>
                       )}
+                      {transaction.status === 'cancel_pending' && (
+                        <span className="text-xs font-semibold text-orange-600 bg-orange-100 border border-orange-200 px-2 py-0.5 rounded">
+                          Chờ duyệt hủy
+                        </span>
+                      )}
                       {transaction.status === 'processing' && (
                         <span className="text-xs font-semibold text-orange-500">
                           Đang xử lý
@@ -251,9 +270,18 @@ const TransactionHistory = () => {
                       )}
 
                       {/* Nút hành động */}
-                      {transaction.status === 'success' && (
-                        <button className="text-[#0064a3] text-xs font-semibold hover:underline flex items-center gap-0.5">
-                          Xem chi tiết <ChevronRight className="w-3 h-3" />
+                      {(transaction.status === 'success' || transaction.status === 'cancel_pending') && (
+                        <button 
+                          type="button"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            console.log('Opening ETicketModal for transaction:', transaction);
+                            setSelectedTransaction(transaction);
+                          }}
+                          className="text-[#0064a3] text-xs font-semibold hover:underline flex items-center gap-1 bg-blue-50 px-3 py-1.5 rounded-lg border border-blue-100 transition-colors hover:bg-blue-100 cursor-pointer z-10"
+                        >
+                          <Ticket className="w-3.5 h-3.5" /> Vé điện tử
                         </button>
                       )}
                       {transaction.status === 'processing' && (
@@ -313,7 +341,7 @@ const TransactionHistory = () => {
       </main>
 
       {/* ===== FOOTER ===== */}
-      <footer className="bg-[#f3f4f6] border-t border-gray-200 py-6">
+      <footer className="bg-[#f3f4f6] border-t border-gray-200 py-6 mt-auto">
         <div className="max-w-[1300px] mx-auto px-6 flex flex-col md:flex-row justify-between items-center text-xs text-gray-500 font-medium">
           <div className="text-[#403B69] font-serif font-bold text-lg mb-4 md:mb-0">
             NoWayHome
@@ -329,6 +357,15 @@ const TransactionHistory = () => {
           </div>
         </div>
       </footer>
+
+      {/* Render Modal */}
+      {selectedTransaction && (
+        <ETicketModal 
+          transaction={selectedTransaction} 
+          onClose={() => setSelectedTransaction(null)} 
+          onCancelRequest={handleCancelRequest}
+        />
+      )}
     </div>
   );
 };

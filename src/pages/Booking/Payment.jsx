@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
 import qrCodeImg from '../../assets/images/qr-code.png';
+import ETicketModal from '../../components/booking/ETicketModal';
 
 const Payment = () => {
   const location = useLocation();
@@ -62,6 +63,10 @@ const Payment = () => {
   const [paymentMethod, setPaymentMethod] = useState('credit_card');
   // State hiển thị modal thông báo thanh toán thành công
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  // State hiển thị E-Ticket
+  const [showETicket, setShowETicket] = useState(false);
+  // State trạng thái của E-Ticket (để demo Hủy phòng)
+  const [ticketStatus, setTicketStatus] = useState('success');
 
   // === Tính toán chi phí ===
   const serviceFee = 1200000;  // Phí dịch vụ cố định
@@ -503,6 +508,9 @@ const Payment = () => {
             {/* Các nút bấm */}
             <div className="space-y-3">
               <button
+                onClick={() => {
+                  setShowETicket(true);
+                }}
                 className="w-full bg-[#3F3D7C] text-white font-medium py-3.5 rounded-xl hover:bg-[#34326b] transition-colors flex items-center justify-center gap-2 text-sm"
               >
                 <Ticket className="w-5 h-5" /> Xem vé điện tử
@@ -516,6 +524,26 @@ const Payment = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* ===== E-TICKET MODAL ===== */}
+      {showETicket && (
+        <ETicketModal 
+          transaction={{
+            id: 'NWH-MPSFYFBD',
+            name: hotel.name,
+            roomName: 'Studio Tiêu Chuẩn (Standard Studio)',
+            checkIn: formatDateWithSlash(bookingData.startDate),
+            checkOut: formatDateWithSlash(bookingData.endDate),
+            guests: `${bookingData.adults + bookingData.children} người`,
+            rooms: `${bookingData.rooms} phòng`,
+            status: ticketStatus
+          }} 
+          onClose={() => setShowETicket(false)} 
+          onCancelRequest={() => {
+            setTicketStatus('cancel_pending');
+          }}
+        />
       )}
 
       <style dangerouslySetInnerHTML={{
