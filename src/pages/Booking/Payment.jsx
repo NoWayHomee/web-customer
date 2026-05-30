@@ -3,6 +3,7 @@
 // Nhận dữ liệu từ trang RoomDetail qua React Router state
 
 import React, { useState, useEffect } from 'react';
+import { useToast, ToastContainer } from '../../components/common/Toast';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import {
   User, Bell, CreditCard, Wallet, Landmark,
@@ -17,10 +18,11 @@ const Payment = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toasts, removeToast, toast } = useToast();
 
   useEffect(() => {
     if (!user) {
-      alert('Vui lòng đăng nhập để tiếp tục thanh toán!');
+      toast.warning('Vui lòng đăng nhập để tiếp tục thanh toán!', 'Chưa đăng nhập');
       navigate('/login', { state: { from: location.pathname + location.search } });
     }
   }, [user, navigate, location]);
@@ -152,7 +154,7 @@ const Payment = () => {
     if (Object.keys(newErrors).length === 0) {
       setShowSuccessModal(true);
     } else {
-      alert("Vui lòng kiểm tra lại thông tin thanh toán!");
+      toast.error('Vui lòng kiểm tra lại thông tin thanh toán!', 'Thông tin chưa đầy đủ');
     }
   };
 
@@ -566,6 +568,9 @@ const Payment = () => {
           animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
         }
       `}} />
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

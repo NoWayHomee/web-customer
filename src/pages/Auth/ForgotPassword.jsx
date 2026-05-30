@@ -6,6 +6,7 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { User, Bell } from 'lucide-react';
+import { useToast, ToastContainer } from '../../components/common/Toast';
 
 const ForgotPassword = () => {
   // State quản lý bước hiện tại (1: nhập email, 2: đặt lại mật khẩu)
@@ -14,6 +15,7 @@ const ForgotPassword = () => {
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [errors, setErrors] = useState({});
+  const { toasts, removeToast, toast } = useToast();
 
   // Xử lý gửi yêu cầu khôi phục (bước 1 → chuyển sang bước 2)
   const handleSendRequest = (e) => {
@@ -60,7 +62,7 @@ const ForgotPassword = () => {
     setErrors(newErrors);
 
     if (Object.keys(newErrors).length === 0) {
-      alert('Cập nhật mật khẩu thành công!');
+      toast.success('Cập nhật mật khẩu thành công! Vui lòng đăng nhập lại.', 'Thành công');
       // Có thể dùng navigate('/login') để chuyển về đăng nhập
     }
   };
@@ -199,6 +201,8 @@ const ForgotPassword = () => {
         </div>
         <div>© 2026 NOWAYHOME. ĐẶT PHÒNG NHANH, TRẢI NGHIỆM CHẤT.</div>
       </footer>
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

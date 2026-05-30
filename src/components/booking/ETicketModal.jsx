@@ -62,7 +62,11 @@ const ETicketModal = ({ transaction, onClose, onCancelRequest }) => {
       document.body.removeChild(link);
     } catch (error) {
       console.error('Error downloading ticket:', error);
-      alert('Có lỗi xảy ra khi lưu vé: ' + (error.message || error));
+      setAlertInfo({
+        title: 'Lỗi',
+        message: 'Có lỗi xảy ra khi lưu vé: ' + (error.message || error),
+        isSuccess: false
+      });
     }
   };
 

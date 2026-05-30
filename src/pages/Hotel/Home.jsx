@@ -3,6 +3,7 @@
 // Đây là trang đầu tiên người dùng nhìn thấy khi truy cập website
 
 import React, { useState } from 'react';
+import { useToast, ToastContainer } from '../../components/common/Toast';
 import { Link, useNavigate } from 'react-router-dom';
 import DatePicker from 'react-datepicker';
 import "react-datepicker/dist/react-datepicker.css";
@@ -18,6 +19,7 @@ const Home = () => {
   // Lấy thông tin user đang đăng nhập từ AuthContext (null nếu chưa đăng nhập)
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { toasts, removeToast, toast } = useToast();
 
   // === Các State quản lý thanh tìm kiếm ===
   // State lưu khoảng ngày đã chọn [ngày nhận phòng, ngày trả phòng]
@@ -48,7 +50,7 @@ const Home = () => {
   // Tạo URL params từ thông tin tìm kiếm và chuyển hướng sang trang kết quả
   const handleSearch = () => {
     if (!location.trim() || !startDate || !endDate) {
-      alert("Vui lòng nhập đầy đủ địa điểm và ngày nhận - trả phòng để tìm kiếm!");
+      toast.warning('Vui lòng nhập đầy đủ địa điểm và ngày nhận - trả phòng để tìm kiếm!');
       return;
     }
 
@@ -497,6 +499,9 @@ const Home = () => {
 
       {/* Component nút nổi CTA - Tải ứng dụng (góc dưới phải màn hình) */}
       <AppDownloadCTA />
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
 
       {/* CSS fix: Đảm bảo popup chọn ngày (react-datepicker) luôn hiển thị trên cùng */}
       <style>{`

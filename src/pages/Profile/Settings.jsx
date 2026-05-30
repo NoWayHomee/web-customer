@@ -4,6 +4,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { useToast, ToastContainer } from '../../components/common/Toast';
 import {
   User, Bell, Settings as SettingsIcon, Heart, Receipt,
   Shield, Globe, Eye
@@ -60,6 +61,7 @@ const SettingToggleRow = ({ label, description, enabled, onChange, borderBottom 
 const Settings = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
+  const { toasts, removeToast, toast } = useToast();
 
   // --- Thông báo ---
   const [emailNotif, setEmailNotif] = useState(user?.settings?.emailNotif ?? true);
@@ -86,7 +88,7 @@ const Settings = () => {
         dataTracking
       }
     });
-    alert('Đã lưu cài đặt!');
+    toast.success('Cài đặt đã được lưu thành công!', 'Lưu thành công');
   };
 
   return (
@@ -352,6 +354,9 @@ const Settings = () => {
           </div>
         </div>
       </footer>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

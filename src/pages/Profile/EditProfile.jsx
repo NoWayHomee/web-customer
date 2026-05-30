@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { useToast, ToastContainer } from '../../components/common/Toast';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import {
@@ -12,6 +13,7 @@ const EditProfile = () => {
   const { user, updateUser } = useAuth();
   const navigate = useNavigate();
   const fileInputRef = useRef(null);
+  const { toasts, removeToast, toast } = useToast();
 
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&hair=shortCombover&beard=medium&eyebrows=default&eyes=default&mouth=default");
 
@@ -29,7 +31,7 @@ const EditProfile = () => {
     const file = e.target.files[0];
     if (file) {
       if (file.size > 5 * 1024 * 1024) {
-        alert("Kích thước ảnh vượt quá 5MB");
+        toast.warning('Kích thước ảnh vượt quá 5MB. Vui lòng chọn ảnh nhỏ hơn!', 'File quá lớn');
         return;
       }
       const reader = new FileReader();
@@ -89,7 +91,7 @@ const EditProfile = () => {
         address: formData.address,
         avatar: formData.avatar,
       });
-      alert('Cập nhật hồ sơ thành công!');
+      toast.success('Cập nhật hồ sơ thành công!', 'Lưu thành công');
     }
   };
 
@@ -361,6 +363,9 @@ const EditProfile = () => {
           </div>
         </div>
       </footer>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };

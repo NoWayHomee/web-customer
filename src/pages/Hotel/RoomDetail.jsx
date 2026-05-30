@@ -3,6 +3,7 @@
 // Nhận dữ liệu: hotel ID từ URL params, ngày/số khách từ query params
 
 import React, { useState, useEffect } from 'react';
+import { useToast, ToastContainer } from '../../components/common/Toast';
 import { useParams, Link, useSearchParams, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useWishlist } from '../../context/WishlistContext';
@@ -44,6 +45,7 @@ const RoomDetail = () => {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  const { toasts, removeToast, toast } = useToast();
 
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -209,14 +211,14 @@ const RoomDetail = () => {
   // Hàm xử lý đặt phòng: Chuyển sang trang thanh toán và truyền dữ liệu qua React Router state
   const handleBooking = () => {
     if (!selectedRoom) {
-      alert('Vui lòng chọn một loại phòng trước khi đặt!');
+      toast.warning('Vui lòng chọn một loại phòng trước khi đặt!', 'Chưa chọn phòng');
       // Có thể dùng window.scrollTo để cuộn xuống phần chọn phòng nếu muốn
       return;
     }
 
     // Kiểm tra đăng nhập trước khi cho phép đặt phòng
     if (!user) {
-      alert('Vui lòng đăng nhập để tiếp tục đặt phòng!');
+      toast.warning('Vui lòng đăng nhập để tiếp tục đặt phòng!', 'Chưa đăng nhập');
       navigate('/login', { state: { from: location.pathname + location.search } });
       return;
     }
@@ -619,6 +621,9 @@ const RoomDetail = () => {
           © 2026 NOWAYHOME. ĐẶT PHÒNG NHANH, TRẢI NGHIỆM CHẤT.
         </div>
       </footer>
+
+      {/* Toast notifications */}
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </div>
   );
 };
