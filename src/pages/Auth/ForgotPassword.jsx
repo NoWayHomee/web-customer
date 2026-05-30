@@ -97,7 +97,7 @@ const ForgotPassword = () => {
         <div className="w-full max-w-lg mb-20">
           {/* Tiêu đề trang */}
           <div className="text-center mb-16">
-            <h1 className="text-5xl font-serif font-bold text-black">
+            <h1 className="font-serif font-bold text-black" style={{ fontSize: '43px' }}>
               Khôi phục mật khẩu
             </h1>
           </div>

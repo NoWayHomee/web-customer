@@ -27,8 +27,8 @@ const AppDownloadCTA = () => {
         >
           {/* --- Header popup: Tiêu đề khuyến mãi với nền gradient tím --- */}
           <div className="bg-gradient-to-r from-[#403B69] to-[#5b54a4] px-6 pt-6 pb-4 text-center relative">
-            <h3 className="text-white font-bold text-xl leading-tight mb-1">
-              Giảm 10% cho đơn đặt phòng<br />đầu tiên trên ứng dụng!
+            <h3 className="text-white font-bold text-xl leading-tight mb-1 pr-6 pl-6">
+              Tải ứng dụng để<br />nhận thêm ưu đãi
             </h3>
             <p className="text-white/80 text-sm mt-2">
               Chỉ cần quét mã QR để được giảm giá ngay
