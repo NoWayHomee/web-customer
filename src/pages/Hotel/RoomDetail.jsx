@@ -49,6 +49,7 @@ const RoomDetail = () => {
   const [hotel, setHotel] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [isDescExpanded, setIsDescExpanded] = useState(false);
 
   // === Lấy thông tin ngày nhận/trả phòng từ URL ===
   const startParam = searchParams.get('startDate');
@@ -338,12 +339,17 @@ const RoomDetail = () => {
             <div>
               <h2 className="text-[22px] font-bold text-gray-900 mb-6 font-serif">Mô tả</h2>
               <div className="bg-[#f8f9fa] rounded-2xl p-6">
-                <p className="text-gray-600 text-[15px] leading-relaxed mb-4">
-                  {hotel.description.length > 200 ? hotel.description.substring(0, 200) + '...' : hotel.description}
+                <p className="text-gray-600 text-[15px] leading-relaxed mb-4 whitespace-pre-line">
+                  {hotel.description.length > 200 && !isDescExpanded 
+                    ? hotel.description.substring(0, 200) + '...' 
+                    : hotel.description}
                 </p>
                 {hotel.description.length > 200 && (
-                  <button className="text-[#3F3D7C] font-bold text-sm hover:underline">
-                    Đọc thêm
+                  <button 
+                    onClick={() => setIsDescExpanded(!isDescExpanded)}
+                    className="text-[#3F3D7C] font-bold text-sm hover:underline"
+                  >
+                    {isDescExpanded ? 'Thu gọn' : 'Đọc thêm'}
                   </button>
                 )}
               </div>
