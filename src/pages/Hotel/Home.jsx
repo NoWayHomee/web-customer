@@ -10,7 +10,7 @@ import { useAuth } from '../../context/AuthContext';
 import {
   User, Bell, MapPin, Calendar, Search,
   Building2, CheckCircle2, Tag, MessageSquare,
-  Backpack, Luggage, Umbrella, Phone, Mail, ChevronRight
+  Backpack, Luggage, Umbrella, Phone, Mail, ChevronRight, Star
 } from 'lucide-react';
 import AppDownloadCTA from '../../components/common/AppDownloadCTA';
 
@@ -360,27 +360,63 @@ const Home = () => {
         </section>
 
 
-        {/* --- Section 3: Cẩm nang du lịch ---
-            3 thẻ card icon: Vật dụng cần thiết, Cách đặt vé tiết kiệm, 5 bãi biển đẹp nhất miền Bắc */}
+        {/* --- Section 3: Khách sạn nổi bật --- */}
         <section>
-          <h2 className="text-3xl font-bold text-[#2a2456] mb-8">Cẩm nang du lịch</h2>
+          <h2 className="text-3xl font-bold text-[#2a2456] mb-8">Khách sạn nổi bật</h2>
           <div className="relative">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
 
-              <div className="bg-white border border-gray-300 rounded-2xl p-8 flex items-center group cursor-pointer hover:border-gray-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <Backpack className="w-14 h-14 text-gray-800 mr-6 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
-                <h3 className="font-bold text-gray-900 text-lg leading-snug">Vật dụng cần thiết<br />khi đi du lịch</h3>
-              </div>
+              {[
+                {
+                  id: 1,
+                  name: "Khách sạn King's Trung Yên",
+                  location: "Hà Nội",
+                  rating: 8.4,
+                  price: "1.500.000",
+                  image: "https://images.unsplash.com/photo-1566073771259-6a8506099945?q=80&w=1000&auto=format&fit=crop"
+                },
+                {
+                  id: 2,
+                  name: "Melia Vinpearl Phu Quoc",
+                  location: "Phú Quốc",
+                  rating: 9.1,
+                  price: "2.800.000",
+                  image: "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?q=80&w=1000&auto=format&fit=crop"
+                },
+                {
+                  id: 3,
+                  name: "InterContinental Danang",
+                  location: "Đà Nẵng",
+                  rating: 9.5,
+                  price: "5.500.000",
+                  image: "https://images.unsplash.com/photo-1542314831-c6a4d14b8e8a?q=80&w=1000&auto=format&fit=crop"
+                }
+              ].map((hotel) => (
+                <Link to={`/hotel/${hotel.id}`} key={hotel.id} className="bg-white border border-gray-100 rounded-2xl overflow-hidden group cursor-pointer shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 flex flex-col">
+                  <div className="relative h-48 overflow-hidden">
+                    <img src={hotel.image} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" alt={hotel.name} />
+                  </div>
+                  <div className="p-5 flex-1 flex flex-col">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="font-bold text-gray-900 text-lg leading-snug line-clamp-2 pr-2">{hotel.name}</h3>
+                      <div className="flex items-center space-x-1 bg-yellow-50 px-2 py-1 rounded-md">
+                        <Star className="w-4 h-4 text-yellow-500 fill-yellow-500" />
+                        <span className="text-yellow-700 font-bold text-sm">{hotel.rating}</span>
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center text-gray-500 text-sm mb-4">
+                      <MapPin className="w-4 h-4 mr-1" />
+                      <span>{hotel.location}</span>
+                    </div>
 
-              <div className="bg-white border border-gray-300 rounded-2xl p-8 flex items-center group cursor-pointer hover:border-gray-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <Luggage className="w-14 h-14 text-gray-800 mr-6 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
-                <h3 className="font-bold text-gray-900 text-lg leading-snug">Cách đặt vé máy bay<br />tiết kiệm</h3>
-              </div>
-
-              <div className="bg-white border border-gray-300 rounded-2xl p-8 flex items-center group cursor-pointer hover:border-gray-500 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
-                <Umbrella className="w-14 h-14 text-gray-800 mr-6 group-hover:scale-110 transition-transform duration-300" strokeWidth={1.5} />
-                <h3 className="font-bold text-gray-900 text-lg leading-snug">5 bãi biển đẹp nhất<br />miền Bắc</h3>
-              </div>
+                    <div className="mt-auto flex items-baseline">
+                      <span className="text-[#2a2456] font-bold text-2xl">{hotel.price}đ</span>
+                      <span className="text-gray-500 text-sm ml-1">/ đêm</span>
+                    </div>
+                  </div>
+                </Link>
+              ))}
 
             </div>
 

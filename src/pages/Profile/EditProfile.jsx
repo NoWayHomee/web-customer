@@ -16,11 +16,12 @@ const EditProfile = () => {
   const [avatarPreview, setAvatarPreview] = useState(user?.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix&hair=shortCombover&beard=medium&eyebrows=default&eyes=default&mouth=default");
 
   const [formData, setFormData] = useState({
-    userId: user?.id || '',
     fullName: user?.name || '',
+    dateOfBirth: user?.dateOfBirth || '',
+    gender: user?.gender || '',
     email: user?.email || '',
     phone: user?.phone || '',
-    nationality: user?.nationality || '',
+    address: user?.address || '',
     avatar: user?.avatar || null,
   });
 
@@ -55,7 +56,7 @@ const EditProfile = () => {
     
     // 1. Kiểm tra không được để trống
     Object.keys(formData).forEach(key => {
-      if (!formData[key] || !formData[key].toString().trim()) {
+      if (key !== 'avatar' && (!formData[key] || !formData[key].toString().trim())) {
         newErrors[key] = 'Trường này không được để trống';
       }
     });
@@ -79,11 +80,13 @@ const EditProfile = () => {
     e.preventDefault();
     if (validateForm()) {
       updateUser({
-        id: formData.userId,
+        ...user,
         name: formData.fullName,
+        dateOfBirth: formData.dateOfBirth,
+        gender: formData.gender,
         email: formData.email,
         phone: formData.phone,
-        nationality: formData.nationality,
+        address: formData.address,
         avatar: formData.avatar,
       });
       alert('Cập nhật hồ sơ thành công!');
@@ -229,20 +232,8 @@ const EditProfile = () => {
 
             {/* Form Fields */}
             <form className="space-y-5" onSubmit={handleSubmit}>
-              {/* Row 1: UserID + Họ và tên */}
+              {/* Row 1: Họ và tên + Ngày sinh */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1.5">UserID</label>
-                  <input
-                    type="text"
-                    name="userId"
-                    value={formData.userId}
-                    onChange={handleChange}
-                    className={`w-full px-4 py-2.5 rounded-lg border bg-white text-sm focus:outline-none transition-colors ${errors.userId ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#0064a3]'}`}
-                    placeholder=""
-                  />
-                  {errors.userId && <p className="text-red-500 text-xs mt-1">{errors.userId}</p>}
-                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Họ và tên</label>
                   <input
@@ -255,10 +246,37 @@ const EditProfile = () => {
                   />
                   {errors.fullName && <p className="text-red-500 text-xs mt-1">{errors.fullName}</p>}
                 </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Ngày sinh</label>
+                  <input
+                    type="date"
+                    name="dateOfBirth"
+                    value={formData.dateOfBirth}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 rounded-lg border bg-white text-sm focus:outline-none transition-colors ${errors.dateOfBirth ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#0064a3]'}`}
+                    placeholder=""
+                  />
+                  {errors.dateOfBirth && <p className="text-red-500 text-xs mt-1">{errors.dateOfBirth}</p>}
+                </div>
               </div>
 
-              {/* Row 2: Email + Số điện thoại */}
+              {/* Row 2: Giới tính + Email */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Giới tính</label>
+                  <select
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 rounded-lg border bg-white text-sm focus:outline-none transition-colors ${errors.gender ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#0064a3]'}`}
+                  >
+                    <option value="">Chọn giới tính</option>
+                    <option value="Nam">Nam</option>
+                    <option value="Nữ">Nữ</option>
+                    <option value="Khác">Khác</option>
+                  </select>
+                  {errors.gender && <p className="text-red-500 text-xs mt-1">{errors.gender}</p>}
+                </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Email</label>
                   <input
@@ -271,6 +289,10 @@ const EditProfile = () => {
                   />
                   {errors.email && <p className="text-red-500 text-xs mt-1">{errors.email}</p>}
                 </div>
+              </div>
+
+              {/* Row 3: Số điện thoại + Địa chỉ */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1.5">Số điện thoại</label>
                   <input
@@ -283,20 +305,18 @@ const EditProfile = () => {
                   />
                   {errors.phone && <p className="text-red-500 text-xs mt-1">{errors.phone}</p>}
                 </div>
-              </div>
-
-              {/* Row 3: Quốc tịch - full width */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1.5">Quốc tịch</label>
-                <input
-                  type="text"
-                  name="nationality"
-                  value={formData.nationality}
-                  onChange={handleChange}
-                  className={`w-full px-4 py-2.5 rounded-lg border bg-white text-sm focus:outline-none transition-colors ${errors.nationality ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#0064a3]'}`}
-                  placeholder=""
-                />
-                {errors.nationality && <p className="text-red-500 text-xs mt-1">{errors.nationality}</p>}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Địa chỉ</label>
+                  <input
+                    type="text"
+                    name="address"
+                    value={formData.address}
+                    onChange={handleChange}
+                    className={`w-full px-4 py-2.5 rounded-lg border bg-white text-sm focus:outline-none transition-colors ${errors.address ? 'border-red-500 focus:border-red-500' : 'border-gray-300 focus:border-[#0064a3]'}`}
+                    placeholder=""
+                  />
+                  {errors.address && <p className="text-red-500 text-xs mt-1">{errors.address}</p>}
+                </div>
               </div>
 
               {/* Divider */}

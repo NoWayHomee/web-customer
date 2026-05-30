@@ -26,7 +26,7 @@ const SearchResults = () => {
   // === Phân tích (parse) ngày từ URL params ===
   const startParam = searchParams.get('startDate');
   const endParam = searchParams.get('endDate');
-  
+
   const parseSafeDate = (dateStr) => {
     if (!dateStr) return null;
     try {
@@ -82,7 +82,7 @@ const SearchResults = () => {
         const response = await hotelService.searchHotels(queryParams);
         if (active) {
           // Backend wraps response as: { statusCode, message, data: { items: [...], meta: {...} } }
-        const data = response.data?.data?.items || response.data?.items || [];
+          const data = response.data?.data?.items || response.data?.items || [];
           setBackendHotels(Array.isArray(data) ? data : []);
         }
       } catch (err) {
@@ -148,7 +148,7 @@ const SearchResults = () => {
   const [priceRange, setPriceRange] = useState([0, 50000000]);
   const [selectedAmenities, setSelectedAmenities] = useState([]);
   const [selectedTypes, setSelectedTypes] = useState([]);
-  
+
   // Các state lọc mới
   const [selectedPayments, setSelectedPayments] = useState([]);
   const [beachRange, setBeachRange] = useState([0, 50]);
@@ -157,7 +157,7 @@ const SearchResults = () => {
   const [selectedAreas, setSelectedAreas] = useState([]);
   const [selectedBedTypes, setSelectedBedTypes] = useState([]);
 
-  const sortOptions = ["Độ phổ biến", "Khuyến mãi HOT", "Giá từ thấp đến cao", "Giá từ cao đến thấp", "Đánh giá sao nhất"];
+  const sortOptions = ["Độ phổ biến", "Giá từ thấp đến cao", "Giá từ cao đến thấp", "Đánh giá cao nhất"];
 
   const handleStarToggle = (star) => {
     setSelectedStars(prev =>
@@ -212,8 +212,7 @@ const SearchResults = () => {
         reviews: h.total_reviews || 0,
         price: h.min_nightly_price || 0,
         originalPrice: h.min_nightly_price ? Math.round(h.min_nightly_price * 1.25) : 0,
-        tag: h.total_reviews > 5 ? "Khuyến mãi HOT" : null,
-        
+
         // Các trường lọc mở rộng (an toàn fallback từ district/seed dữ liệu)
         amenities: ["Wifi miễn phí", "Điều hòa", "Nhà hàng", "Hồ bơi"],
         paymentOptions: ["Hủy miễn phí", "Thanh toán tại nơi ở", "Đặt trước trả tiền sau"],
@@ -278,18 +277,18 @@ const SearchResults = () => {
 
     // Lọc theo lựa chọn thanh toán
     if (selectedPayments.length > 0) {
-      result = result.filter(hotel => 
+      result = result.filter(hotel =>
         hotel.paymentOptions && selectedPayments.every(payment => hotel.paymentOptions.includes(payment))
       );
     }
 
     // Lọc theo khoảng cách biển
-    result = result.filter(hotel => 
+    result = result.filter(hotel =>
       hotel.distanceToBeach !== undefined ? (hotel.distanceToBeach >= beachRange[0] && hotel.distanceToBeach <= beachRange[1]) : true
     );
 
     // Lọc theo khoảng cách trung tâm
-    result = result.filter(hotel => 
+    result = result.filter(hotel =>
       hotel.distanceToCenter !== undefined ? (hotel.distanceToCenter >= centerRange[0] && hotel.distanceToCenter <= centerRange[1]) : true
     );
 
@@ -306,7 +305,7 @@ const SearchResults = () => {
 
     // Lọc theo loại giường
     if (selectedBedTypes.length > 0) {
-      result = result.filter(hotel => 
+      result = result.filter(hotel =>
         hotel.bedTypes && selectedBedTypes.some(bedType => hotel.bedTypes.includes(bedType))
       );
     }
@@ -321,10 +320,6 @@ const SearchResults = () => {
         break;
       case "Đánh giá sao nhất":
         result.sort((a, b) => b.rating - a.rating);
-        break;
-      case "Khuyến mãi HOT":
-        // Ưu tiên những phòng có tag "Khuyến mãi HOT"
-        result.sort((a, b) => (a.tag === "Khuyến mãi HOT" ? -1 : 1));
         break;
       case "Độ phổ biến":
       default:
@@ -714,9 +709,9 @@ const SearchResults = () => {
               Apply Filters
             </button>
             <button
-              onClick={() => { 
+              onClick={() => {
                 setSelectedStars([]); setPriceRange([0, 50000000]); setSelectedAmenities([]); setSelectedTypes([]);
-                setSelectedPayments([]); setBeachRange([0, 50]); setCenterRange([0, 50]); 
+                setSelectedPayments([]); setBeachRange([0, 50]); setCenterRange([0, 50]);
                 setSelectedGuestRatings([]); setSelectedAreas([]); setSelectedBedTypes([]);
               }}
               className="w-full mt-3 py-2 text-[#403B69] font-bold hover:underline"
@@ -770,7 +765,7 @@ const SearchResults = () => {
                   {/* Image */}
                   <div className="w-full md:w-[280px] h-60 md:h-auto relative flex-shrink-0">
                     <img src={hotel.image} alt={hotel.name} className="w-full h-full object-cover" />
-                    
+
                     {/* Heart Button */}
                     <button
                       onClick={(e) => {
@@ -782,19 +777,12 @@ const SearchResults = () => {
                       aria-label="Thêm vào yêu thích"
                     >
                       <Heart
-                        className={`w-5 h-5 transition-all duration-300 ${
-                          isInWishlist(hotel.id)
+                        className={`w-5 h-5 transition-all duration-300 ${isInWishlist(hotel.id)
                             ? 'text-red-500 fill-red-500 scale-110'
                             : 'text-gray-600 hover:text-red-500'
-                        }`}
+                          }`}
                       />
                     </button>
-
-                    {hotel.tag && (
-                      <div className="absolute top-4 left-0 bg-red-500 text-white text-xs font-bold px-3 py-1.5 rounded-r-lg shadow-sm">
-                        {hotel.tag}
-                      </div>
-                    )}
                   </div>
 
                   {/* Details */}
@@ -867,9 +855,9 @@ const SearchResults = () => {
                 <h3 className="text-xl font-bold text-gray-800 mb-2">Không tìm thấy chỗ nghỉ phù hợp</h3>
                 <p className="text-gray-500">Vui lòng thay đổi bộ lọc hoặc tiêu chí tìm kiếm để xem thêm kết quả.</p>
                 <button
-                  onClick={() => { 
+                  onClick={() => {
                     setSelectedStars([]); setPriceRange([0, 50000000]); setSelectedAmenities([]); setSelectedTypes([]);
-                    setSelectedPayments([]); setBeachRange([0, 50]); setCenterRange([0, 50]); 
+                    setSelectedPayments([]); setBeachRange([0, 50]); setCenterRange([0, 50]);
                     setSelectedGuestRatings([]); setSelectedAreas([]); setSelectedBedTypes([]);
                   }}
                   className="mt-6 text-[#403B69] font-bold hover:underline"
